@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>About on THIS IS KERNEL</title>
+    <link>https://binary-win.github.io/about/</link>
+    <description>Recent content in About on THIS IS KERNEL</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <atom:link href="https://binary-win.github.io/about/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>ABOUT</title>
+      <link>https://binary-win.github.io/about/about/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://binary-win.github.io/about/about/</guid>
+      <description>&lt;p&gt;&amp;ldquo;It’s not that I want to break things. I want to learn how they work.&amp;rdquo;&lt;/p&gt;&#xA;&lt;p&gt;I am a security researcher with a passion for understanding the structures and mechanisms behind technology. My work is focused on deeply analyzing and learning how systems are built and function, from the ground up. I aim to explore, utilize, and optimize these structures to enhance security and gain a deeper understanding of how technology operates.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
