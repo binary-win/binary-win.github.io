@@ -1,42 +1,49 @@
 title: "RESEARCH.ME"
 author: "Ke3rNel"
-description: "you can contact me in telegram." # This will show up in places like twitter, linkedin, etc, if you share your sites url as a post.
+description: "you can contact me via Telegram: t.me/Ke3rNel."
 
-# Email / Social media user names used by the minima theme:
-# All of these are optional and can be removed or commented out
+# Contact Information
 email: "Alireza.hoss3in1@gmail.com"
-#twitter_username: "twitteruser"
 github_username: "Binary-win"
 linkedin_username: "alireza-hosseini-ab53a7282"
-#facebook_username: username
-#flickr_username: username
-#instagram_username: username
-#pinterest_username: username
-#youtube_username: username
-#googleplus_username: +username
+
+# Optional: Uncomment and populate the following fields for additional social media links
+# twitter_username: "twitteruser"
+# facebook_username: "username"
+# flickr_username: "username"
+# instagram_username: "username"
+# pinterest_username: "username"
+# youtube_username: "username"
+# googleplus_username: "+username"
 
 #########################################################################################
-######### Nothing below needs to be changed (unless you know what you're doing) #########
+######### Configuration below this point should only be modified if you're familiar #######
+######### with the Jekyll and plugin settings. Otherwise, leave it as-is. ##################
 #########################################################################################
-theme: "minima"
 
-#rss: rss
+theme: "minima"  # Minimalistic theme for simplicity and clarity
+
+# Optional: Enable RSS feed generation
+# rss: rss
 
 kramdown:
   syntax_highlighter_opts:
-    disable: true
-    
+    disable: true  # Disable syntax highlighting to enhance performance and compatibility with certain formats
+
+# Plugins to extend Jekyll functionality
 plugins:
-  - jekyll-feed
-  - jekyll-sitemap
+  - jekyll-feed  # Enables automatic RSS feed generation
+  - jekyll-sitemap  # Generates a sitemap.xml for better SEO and search engine discoverability
 
+# Title generation configuration for posts
 titles_from_headings:
-  strip_title: true
-  collections: true
+  strip_title: true  # Strips unnecessary prefixes from headings in titles
+  collections: true  # Ensures collection posts also have correctly generated titles
 
+# Default values for posts
 defaults:
   - scope:
       path: ""
-      type: post
+      type: post  # Default type for content is set to "post"
     values:
-      tags: Other
+      tags: [Other]  # Default tag for new posts is "Other"
