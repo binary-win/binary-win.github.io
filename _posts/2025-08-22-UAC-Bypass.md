@@ -1,4 +1,4 @@
-# Elastic Defend Bypass: UAC Bypass Chain Leads to Silent Local Privilege Escalation (LPE)
+## **Elastic Defend Bypass: UAC Bypass Chain Leads to Silent Local Privilege Escalation (LPE)**
 
 
 
@@ -35,7 +35,7 @@ monitors UAC bypass patterns and LOLBin misuse.
 
 ---
 
-### **Vulnerability Classification**
+#### **Vulnerability Classification**
 - Local Privilege Escalation (LPE)
 - User Account Control (UAC) Bypass
 - Elastic EDR Detection Evasion
@@ -43,7 +43,7 @@ monitors UAC bypass patterns and LOLBin misuse.
 
 ----
 
-### **Chained Technique Details:**
+#### **Chained Technique Details:**
 1. **Initial vector**: User-level process executes a signed, auto-elevated
 binary (**fodhelper.exe**).
 
@@ -51,7 +51,7 @@ binary (**fodhelper.exe**).
 settings\Shell\Open\command*) is modified to point to an attacker-
 controlled executable.
 
-3.**COM Object Abuse : attacker-controlled executable try to Execute Cmd
+3. **COM Object Abuse : attacker-controlled executable try to Execute Cmd
 via COM Object.**
 
 4. **Privilege Escalation**: fodhelper.exe runs the payload as administrator
@@ -65,9 +65,9 @@ fodhelper-launched processes to medium integrity if suspicious.
 
 
 ---
-### **Why it Works?**
+#### **Why it Works?**
 
-#### Part 1 – Fodhelper Behavior
+##### Part 1 – Fodhelper Behavior
 fodhelper.exe is a trusted, auto-elevated binary signed by Microsoft. When executed, it queries specific registry keys (previously discussed) to determine which executable to launch.
 
 Attackers often exploit this by redirecting those registry values to binaries like cmd.exe or powershell.exe. However, such high-risk executables are typically monitored and blocked by modern security solutions (e.g., Elastic EDR), causing the UAC bypass to fail.
@@ -78,7 +78,7 @@ The issue:
 
 > The custom binary is launched without elevation — it inherits the standard user token.
 
-####  Part 2 – COM Elevation via cmstplua
+#####  Part 2 – COM Elevation via cmstplua
 
 To silently escalate privileges, we leverage a COM-based UAC bypass using the following COM object:
 
@@ -104,7 +104,7 @@ However:
 > Since the COM object runs elevated, invoking ShellExec() from a non-elevated process triggers a UAC prompt, making the technique noisy and detectable.
 
 
-### Part 3 – Chaining Fodhelper + cmstplua
+##### Part 3 – Chaining Fodhelper + cmstplua
 To bypass the UAC prompt and achieve silent elevation:
 
 1. fodhelper.exe is launched — it's auto-elevated by default.
@@ -124,7 +124,7 @@ To bypass the UAC prompt and achieve silent elevation:
 
 
 ---
-### **Impact**
+#### **Impact**
 An unprivileged attacker can elevate to administrator silently, gaining full control of the system while completely bypassing EDR detection and logging. This significantly undermines endpoint security and could be used to:
 • Install persistence mechanisms
 • Exfiltrate credentials
@@ -132,26 +132,6 @@ An unprivileged attacker can elevate to administrator silently, gaining full con
 • Conduct lateral movement
 
 
-----
-
-
-PoC & Artifacts:
-• Attached: UAC_Bypass_Elastic_PoC.zip
-• Executable - The PoC source code is available upon request. I am
-happy to provide it privately once the report has been reviewed
-and confirmed as a valid issue.
-• Video recording of exploit
-• png and svg of the Flow
-• README.txt
-
-
-----
-
-
-{F4655992}
-
-*sha256:
-c6291e24c3f53247e00cbf32cd5aea79d765736f*
 
 
 ---
@@ -161,13 +141,9 @@ c6291e24c3f53247e00cbf32cd5aea79d765736f*
 - MITRE ATT&CK T1559.001 :Inter-Process Communication: Component Object Model
 
 
+
+
 ---
-
-
-**Disclosure Policy:
-This report is submitted responsibly through HackerOne. I have not publicly
-disclosed the technique and await your analysis and feedback before further
-action.**
 
 
 
