@@ -1,4 +1,4 @@
-#Elastic Defend Bypass: UAC Bypass Chain Leads to Silent Local Privilege Escalation (LPE)
+# Elastic Defend Bypass: UAC Bypass Chain Leads to Silent Local Privilege Escalation (LPE)
 
 ![Preview](https://raw.githubusercontent.com/binary-win/binary-win.github.io/main/image/videos/uac_chain_bypass.mkv)
 
