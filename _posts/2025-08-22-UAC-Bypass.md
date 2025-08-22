@@ -60,8 +60,8 @@ via COM Object.**
 fodhelper-launched processes to medium integrity if suspicious.
 
 
+![UAC_FLOW](https://github.com/binary-win/binary-win.github.io/blob/main/image/FLOW_UAC.png?raw=true)
 
-{F4655955}
 
 
 ---
