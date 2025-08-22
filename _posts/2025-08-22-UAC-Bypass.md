@@ -7,11 +7,9 @@
   <source src="https://raw.githubusercontent.com/binary-win/binary-win.github.io/main/image/videos/uac_chain_bypass.mp4" type="video/mp4">
 </video>
 
-<video width="700" height="500" controls>
-  <source src="{{ '/image/videos/uac_chain_bypass.mp4' | relative_url }}" type="video/mp4">
-</video>
+
   
-**Summary**
+##### **Summary**
 A chained technique has been identified that allows a local, unprivileged
 attacker to achieve **silent privilege escalation to administrator** by
 bypassing protections enforced by **Elastic Defend v9.0.4**. The method
@@ -26,9 +24,11 @@ implemented by Elastic Defend, including detection logic that typically
 monitors UAC bypass patterns and LOLBin misuse.
 
 
+
 ---
 
-### **Product Information**
+
+#### **Product Information**
 - Product: Elastic Endpoint Security (Elastic Agent)
 - Version: v9.0.4
 - Platform: Windows 10 / Windows 11 (x64)
