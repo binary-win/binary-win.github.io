@@ -238,4 +238,5 @@ I slightly modified the original PoC code, tested it in my environment, and succ
 >  Technical note:
 > The modifications were minimal but critical for my target setup. The PoC demonstrates how the CMSTPLUA auto-elevation > mechanism can be abused to silently escalate privileges.
 
-and Also Lovely **G3tSystem**
+I also want to acknowledge g3tsyst3m for his invaluable blogs. His tutorials and technical write-ups were extremely helpful, and I learned a lot from his techniques and explanations. 
+you can find him at [g3tsyst3m](https://x.com/G3tSyst3m)
