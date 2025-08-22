@@ -64,6 +64,7 @@ fodhelper-launched processes to medium integrity if suspicious.
 
 
 
+
 ---
 #### **Why it Works?**
 
@@ -122,7 +123,6 @@ To bypass the UAC prompt and achieve silent elevation:
 
 
 
-
 ---
 #### **Impact**
 An unprivileged attacker can elevate to administrator silently, gaining full control of the system while completely bypassing EDR detection and logging. This significantly undermines endpoint security and could be used to:
@@ -134,6 +134,18 @@ An unprivileged attacker can elevate to administrator silently, gaining full con
 
 
 
+
+
+
+#### **want to Know more about it? or How to Detect?** *(See the Presentation)* ;P
+![UAC_FLOW](https://github.com/binary-win/binary-win.github.io/blob/main/image/UAC_DETECT.png?raw=true)
+
+
+
+
+
+
+
 ---
 
 **References:**
@@ -141,14 +153,6 @@ An unprivileged attacker can elevate to administrator silently, gaining full con
 - MITRE ATT&CK T1559.001 :Inter-Process Communication: Component Object Model
 
 
-
-
----
-
-
-
-{F4656222}
-{F4656225}
 
 
 
