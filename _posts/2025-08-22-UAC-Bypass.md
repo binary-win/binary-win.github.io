@@ -204,8 +204,11 @@ int main() {
 #### **Impact**
 An unprivileged attacker can elevate to administrator silently, gaining full control of the system while completely bypassing EDR detection and logging. This significantly undermines endpoint security and could be used to:
 • Install persistence mechanisms
+
 • Exfiltrate credentials
+
 • Deploy malware or ransomware
+
 • Conduct lateral movement
 
 
@@ -221,7 +224,7 @@ An unprivileged attacker can elevate to administrator silently, gaining full con
 
 
 
-
+https://github.com/binary-win/UAC-Bypass-Presentation.git 👾
 
 ---
 
