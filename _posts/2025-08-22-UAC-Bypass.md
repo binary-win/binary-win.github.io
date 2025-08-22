@@ -1,4 +1,4 @@
-## **Elastic Defend Bypass: UAC Bypass Chain Leads to Silent Local Privilege Escalation (LPE)**
+## **Elastic Defend Bypass:  UAC Bypass Chain Leading To Silent Elevation **
 
 
 
