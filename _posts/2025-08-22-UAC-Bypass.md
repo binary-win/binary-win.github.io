@@ -7,7 +7,9 @@
   <source src="https://raw.githubusercontent.com/binary-win/binary-win.github.io/main/image/videos/uac_chain_bypass.mp4" type="video/mp4">
 </video>
 
-
+<video width="700" height="500" controls>
+  <source src="{{ '/image/videos/uac_chain_bypass.mp4' | relative_url }}" type="video/mp4">
+</video>
   
 **Summary**
 A chained technique has been identified that allows a local, unprivileged
