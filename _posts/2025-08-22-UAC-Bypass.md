@@ -1,4 +1,4 @@
-## **Elastic Defend Bypass:  UAC Bypass Chain Leading To Silent Elevation **
+## ** Elastic Defend Bypass:  UAC Bypass Chain Leading To Silent Elevation **
 
 
 
