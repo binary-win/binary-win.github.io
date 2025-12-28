@@ -83,19 +83,24 @@ KERNELBASE!TerminateProcess+0x30
 
 Prior to invoking PerfInfoLogSyscallEntry, the system call arguments and the address of the system call handler are pushed onto the stack. If a breakpoint is set on the syscall handler address obtained from the stack and execution is resumed (g) in WinDbg 
 <img width="620" height="218" alt="image" src="https://github.com/user-attachments/assets/973badad-4cb2-43c0-aa80-309105f6a6aa" />
+
 it can be observed that the handler replaces or redirects execution within the aswVMmm module.
 <img width="654" height="181" alt="image" src="https://github.com/user-attachments/assets/7aa493dd-c387-41a8-aeee-c26693c97a4b" />
 
 **The call stack reflects the following execution sequence:**
 <img width="920" height="468" alt="image" src="https://github.com/user-attachments/assets/b39bc3c7-52ec-4935-82d7-81f34f7957ac" />
 
-What did Avast overwrite?
+
+
+---
+
+### **What did Avast overwrite?**
 <img width="766" height="308" alt="image" src="https://github.com/user-attachments/assets/4db996fc-4f7d-4e14-8f31-eba272286c74" />
 
 
 
 
-<img width="1602" height="492" alt="image" src="https://github.com/user-attachments/assets/3e10bbbf-f8b2-46d6-a0a7-c5b1d726ad27" />
+<img width="1000" height="136" alt="image" src="https://github.com/user-attachments/assets/bcc37db8-a940-40e9-bdee-cbeb046e57b7" />
 
 <img width="1041" height="360" alt="image" src="https://github.com/user-attachments/assets/4abf1b0c-cb29-4f64-b26c-7cf6e2cc6698" />
 
