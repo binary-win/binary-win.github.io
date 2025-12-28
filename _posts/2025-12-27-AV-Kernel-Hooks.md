@@ -11,6 +11,7 @@ Avast driver (`aswVmm.sys`) hook syscalls using this technique Intercepts sensit
 `NtTerminateProcess`
 `NtOpenProcess`
 
+<img width="1329" height="692" alt="image" src="https://github.com/user-attachments/assets/548336ef-3d56-48e6-94b6-adedcb8d580c" />
 
 
 
