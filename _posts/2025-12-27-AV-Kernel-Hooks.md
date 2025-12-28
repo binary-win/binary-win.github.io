@@ -11,6 +11,25 @@ Avast driver (`aswVmm.sys`) hook syscalls using this technique Intercepts sensit
 <img width="866" height="277" alt="image" src="https://github.com/user-attachments/assets/fc917027-b060-4098-ad3c-9e9b06cd89f3" />
 
 
+
+The following commands are useful for inspecting the relevant structures and execution flow, and you can try them yourself:
+
+bcdedit /debug on
+bcdedit /dbgsettings NET HOSTIP:192.168.113.121 PORT:50000
+>Enables kernel debugging and configures remote debugging via WinDbg.
+
+logman query providers
+>Lists ETW providers, including CKCL.
+
+ba w 8 ffff8283`b9d81ab0
+>Sets a write breakpoint; the 0x40 offset is significant and corresponds to @rsp + 0x40.
+
+dt _WMI_LOGGER_CONTEXT poi(poi(nt!EtwpDebuggerData + 0x10) + 0x10)
+>Displays the _WMI_LOGGER_CONTEXT structure to inspect the GetCpuLock field.
+
+dq poi(nt!HalpPerformanceCounter) + 0x70
+>Dumps the pointer at offset 0x70 to identify the address that has been replaced.
+
 ---
 
 ### Brief History on Antivirus and EDR kernel hooking
@@ -107,17 +126,22 @@ Further analysis reveals the following implementations. The first image demonstr
 
 ---
 ### a bit Reversing Drivers
+also i reversed some functions of the AswVmm and the Aswsp 
 
-<img width="1222" height="1222" alt="image" src="https://github.com/user-attachments/assets/0cbc9a1e-7ae0-4398-8be1-54ff1d2d217f" />
-
-
-
-
-
-with great thanks to [archie](https://archie-osu.github.io/etw/hooking/2025/04/09/hooking-context-swaps-with-etw.html) and [Denis Skvortcov](https://the-deniss.github.io/)
+<img width="350" height="350" alt="image" src="https://github.com/user-attachments/assets/bbe96a35-1273-41df-9b16-717f08db7523" />
 
 
 
+
+
+
+
+
+
+
+
+---
+Many thanks to [archie](https://archie-osu.github.io/etw/hooking/2025/04/09/hooking-context-swaps-with-etw.html) and [Denis Skvortcov](https://the-deniss.github.io/) for their excellent research and write-ups.
 
 
 
