@@ -1,4 +1,4 @@
-#  Avast Hooking the Kernel (AV hooks)
+<img width="1114" height="237" alt="image" src="https://github.com/user-attachments/assets/04df5662-28d4-459b-93f5-205d845eb2aa" /><img width="2800" height="140" alt="image" src="https://github.com/user-attachments/assets/bd04086c-6940-4126-b4a1-674ee58dc290" />#  Avast Hooking the Kernel (AV hooks)
 
 
   
@@ -43,22 +43,46 @@ This became the foundation for modern EDR (Endpoint Detection and Response), whi
 
 
 
+--- 
 
 ### **Circular Kernel Context Logger (CKCL)**
-The Circular Kernel Context Logger (CKCL) is a built-in, always-active Event Tracing for Windows (ETW) session in Windows, specifically designed for lightweight, high-frequency kernel event capture. It has been present since Windows Vista and is enabled by default in all modern Windows versions.
+Avast employs a sophisticated, PatchGuard-compliant technique to intercept system calls at the kernel level by leveraging the Circular Kernel Context Logger (CKCL) — a built-in, always-active ETW session with GUID {54DEA73A-ED1F-42A4-AF71-3E63D056F174}.
+
+This method is commonly known as InfinityHook — originally an offensive technique discovered around 2018–2019 (publicly released by Nick Peterson / everdox on GitHub), later repurposed by some EDR/AV vendors (including Avast) for defensive syscall monitoring.
+This method is commonly known as InfinityHook ([originally an offensive technique discovered around 2018–2019, later repurposed by some EDR/AV vendors for defensive syscall monitoring]([url](https://github.com/everdox/InfinityHook))).
 
 
 
-##### Syscall Interception via CKCL
+### Syscall Flow Analysis: Clean Windows vs. Avast-Installed Environment
+
+**Standard Execution Path (Clean Windows – No Avast)**
+On a vanilla Windows system without Avast (or any CKCL-hijacking EDR), the syscall invocation for NtTerminateProcess follows the standard kernel dispatch and return flow:
+```
+nt!NtTerminateProcess
+nt!KiSystemServiceCopyEnd+0x25
+ntdll!NtTerminateProcess+0x14
+KERNELBASE!TerminateProcess+0x30
+```
+(Stack trace captured from a clean Windows 11 system)
+
+This is the expected, unmodified behavior:
+<img width="1364" height="301" alt="image" src="https://github.com/user-attachments/assets/5d44fdca-5b3b-46d6-af17-b778ef69c582" />
 
 
+**Avast-Installed System: Altered Return Path**
+When Avast’s kernel driver (typically `aswbids.sys` or `aswVmm.sys`) has applied its hook on the CKCL session, the syscall exit path changes dramatically:
 
+```
+nt!NtTerminateProcess
+nt!KiSystemServiceExitPico+0x3a8   ← HERE 
+ntdll!NtTerminateProcess+0x14
+KERNELBASE!TerminateProcess+0x30
+```
 
-
-
-
-
-
+> **Why the jump to `KiSystemServiceExitPico`?**
+> This is not a random detour — it is a direct side effect of Avast’s ETW hijack activating the kernel’s performance tracing infrastructure.
+> **Root Cause: Activation of Performance Tracing via PerfGlobalGroupMask**
+>The kernel uses a global bitmap called PerfGlobalGroupMask (located in the PCR or KPRCB structure) to control which >performance-related ETW events are enabled system-wide.
 
 
 
