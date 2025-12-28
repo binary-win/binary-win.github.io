@@ -97,13 +97,18 @@ it can be observed that the handler replaces or redirects execution within the a
 ### **What did Avast overwrite?**
 <img width="766" height="308" alt="image" src="https://github.com/user-attachments/assets/4db996fc-4f7d-4e14-8f31-eba272286c74" />
 
+The Avast driver pointer is overwritten with the original GetCpuClock function pointer, which is retrieved from offset 0x70 of the HalpPerformanceCounter structure (mov rax, qword ptr [rdi+70h]).
 
-
-
+Further analysis reveals the following implementations. The first image demonstrates a pattern-based search used to resolve the address of HalpPerformanceCounter. The second image shows the primary logic, where GetCpuLock is set to 1 and the call to
+`HalpPerformanceCounter.FunctionTable.QueryCounter(internal_data)` is overridden.
 <img width="1000" height="136" alt="image" src="https://github.com/user-attachments/assets/bcc37db8-a940-40e9-bdee-cbeb046e57b7" />
 
 <img width="1041" height="360" alt="image" src="https://github.com/user-attachments/assets/4abf1b0c-cb29-4f64-b26c-7cf6e2cc6698" />
 
+---
+### a bit Reversing Drivers
+
+<img width="1222" height="1222" alt="image" src="https://github.com/user-attachments/assets/0cbc9a1e-7ae0-4398-8be1-54ff1d2d217f" />
 
 
 
