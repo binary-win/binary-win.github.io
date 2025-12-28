@@ -1,7 +1,4 @@
-<img width="1114" height="237" alt="image" src="https://github.com/user-attachments/assets/04df5662-28d4-459b-93f5-205d845eb2aa" /><img width="2800" height="140" alt="image" src="https://github.com/user-attachments/assets/bd04086c-6940-4126-b4a1-674ee58dc290" />#  Avast Hooking the Kernel (AV hooks)
 
-
-  
 ##### **Summary**
 We walk through undocumented internals such as CKCL, PerfInfoLogSysCallEntry, HalPrivateDispatch / HalpPerformanceCounter, and explain how ETW can be abused to gain early control over syscall dispatch.
 also a little reversing avast driver 
@@ -11,8 +8,7 @@ Avast driver (`aswVmm.sys`) hook syscalls using this technique Intercepts sensit
 `NtTerminateProcess`
 `NtOpenProcess`
 
-<img width="1329" height="692" alt="image" src="https://github.com/user-attachments/assets/548336ef-3d56-48e6-94b6-adedcb8d580c" />
-
+<img width="866" height="277" alt="image" src="https://github.com/user-attachments/assets/fc917027-b060-4098-ad3c-9e9b06cd89f3" />
 
 
 ---
@@ -66,7 +62,7 @@ KERNELBASE!TerminateProcess+0x30
 (Stack trace captured from a clean Windows 11 system)
 
 This is the expected, unmodified behavior:
-<img width="1364" height="301" alt="image" src="https://github.com/user-attachments/assets/5d44fdca-5b3b-46d6-af17-b778ef69c582" />
+<img width="655" height="146" alt="image" src="https://github.com/user-attachments/assets/48f3d9a2-2789-44fe-a255-1fbd488303d1" />
 
 
 **Avast-Installed System: Altered Return Path**
