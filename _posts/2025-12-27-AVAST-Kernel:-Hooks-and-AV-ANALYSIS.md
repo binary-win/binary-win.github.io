@@ -175,13 +175,17 @@ in short, this function classifies every process by its filename and assigns cus
 <img width="799" height="463" alt="image" src="https://github.com/user-attachments/assets/fd7f9acd-ecc0-43e2-bed6-ace14466c8e7" />
 
 Additionally, I extracted Unicode strings from the aswVmm driver using
-s -su fffff8045c840000 fffff8045c8a5000.
+
+`s -su fffff8045c840000 fffff8045c8a5000`
+
 Interestingly, this revealed which functions were being hooked.
 <img width="704" height="487" alt="image" src="https://github.com/user-attachments/assets/f1449ac6-3d39-489c-b5b4-c6fdb05648f3" />
 
 <img width="294" height="525" alt="image" src="https://github.com/user-attachments/assets/a28f10ed-2e00-49b9-b994-2d9c7ca4ed67" />
 
 
+**I also reversed other drivers during this process, but I believe this is enough for now. Overall, this work was a valuable learning experience, providing hands-on insight into kernel hooking, ETW internals, low-level Windows debugging, and driver reverse engineering.
+Thank you all for reading.**
 
 ---
 Many thanks to [archie](https://archie-osu.github.io/etw/hooking/2025/04/09/hooking-context-swaps-with-etw.html) and [Denis Skvortcov](https://the-deniss.github.io/) for their excellent research and write-ups.
