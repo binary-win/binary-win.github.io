@@ -14,20 +14,21 @@ Avast driver (`aswVmm.sys`) hook syscalls using this technique Intercepts sensit
 
 The following commands are useful for inspecting the relevant structures and execution flow, and you can try them yourself:
 
-bcdedit /debug on
-bcdedit /dbgsettings NET HOSTIP:192.168.113.121 PORT:50000
+`bcdedit /debug on`
+
+`bcdedit /dbgsettings NET HOSTIP:192.168.113.121 PORT:50000`
 >Enables kernel debugging and configures remote debugging via WinDbg.
 
-logman query providers
+`logman query providers`
 >Lists ETW providers, including CKCL.
 
-ba w 8 ffff8283`b9d81ab0
+`ba w 8 ffff8283b9d81ab0`
 >Sets a write breakpoint; the 0x40 offset is significant and corresponds to @rsp + 0x40.
 
-dt _WMI_LOGGER_CONTEXT poi(poi(nt!EtwpDebuggerData + 0x10) + 0x10)
+`dt _WMI_LOGGER_CONTEXT poi(poi(nt!EtwpDebuggerData + 0x10) + 0x10)`
 >Displays the _WMI_LOGGER_CONTEXT structure to inspect the GetCpuLock field.
 
-dq poi(nt!HalpPerformanceCounter) + 0x70
+`dq poi(nt!HalpPerformanceCounter) + 0x70`
 >Dumps the pointer at offset 0x70 to identify the address that has been replaced.
 
 ---
@@ -131,9 +132,38 @@ also i reversed some functions of the AswVmm and the Aswsp
 <img width="350" height="350" alt="image" src="https://github.com/user-attachments/assets/bbe96a35-1273-41df-9b16-717f08db7523" />
 
 
+there is a function that loads ci.dll (Code Integrity module) which is used to check file signatures and verify integrity, so i went forward and kept digging deeper. then i found another function that's called inside a loop during driver initialization, and after reverse engineering it closely i realized what it's actually doing:
+it's looking up the EPROCESS structure for specific processes (via PsLookupProcessByProcessId), then it creates a new protection record with the PID, the EPROCESS pointer, some flags, and appends it to a hidden hash table (basically a global array of 256 linked lists indexed by PID >> 3).
+<img width="612" height="322" alt="image" src="https://github.com/user-attachments/assets/b30cb1f5-b42a-4845-b696-e2b48c872397" />
 
 
+there is this loop right after the driver queries the full process list with ZwQuerySystemInformation(SystemProcessInformation), and it's walking through every single running process on the system:
+```
+ SystemInformation = ZwQuerySystemInformation(SystemProcessInformation, SystemProcessInformation, i, 0);
+    if ( SystemInformation != -1073741820 )
+      break;
+    ExFreePoolWithTag(SystemProcessInformation, 0x41735370u);
+  }
+  if ( SystemInformation >= 0 )
+  {
+    SystemProcessInformation_1 = SystemProcessInformation;
+    for ( j = 0; j < 0xFFFF; ++j )
+    {
+      pick_lock(1);
+      if ( !sub_14000F4F8(SystemProcessInformation_1 + 10)) )  // check if PID is already in protection hash table
+        ASW_proc_hash_createor(v33, SystemProcessInformation_1 + 11), v33, 0); // if not, create a new protection record
+      sub_14000EFAC();      // release the lock
+      ASW_PROC_PROTECTOR(SystemProcessInformation_1 + 10, 0); // classify the process & apply protection rules
+      v34 = *SystemProcessInformation_1;
+      if ( !(_DWORD)v34 )
+        break;
+      SystemProcessInformation_1 = (unsigned int *)((char *)SystemProcessInformation_1 + v34); // next entry in SYSTEM_PROCESS_INFORMATION list
+    }
+  }
+```
+<img width="516" height="184" alt="image" src="https://github.com/user-attachments/assets/b2b940fd-c56a-4c07-829b-a4e28ad82995" />
 
+now lets take look at `ASW_PROC_PROTECTOR`:
 
 
 
