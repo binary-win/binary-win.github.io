@@ -1,4 +1,4 @@
-# Avast AV Analsys (Kernel HOOKING& a bit Reverse)
+# Analyzing Avast AV: Kernel Hooking and Driver Reverse Engineering
 
 ##### **Summary**
 We walk through undocumented internals such as CKCL, PerfInfoLogSysCallEntry, HalPrivateDispatch / HalpPerformanceCounter, and explain how ETW can be abused to gain early control over syscall dispatch.
