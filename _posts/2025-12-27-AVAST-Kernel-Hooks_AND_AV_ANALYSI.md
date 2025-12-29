@@ -173,6 +173,10 @@ in short, this function classifies every process by its filename and assigns cus
 
 <img width="799" height="463" alt="image" src="https://github.com/user-attachments/assets/fd7f9acd-ecc0-43e2-bed6-ace14466c8e7" />
 
+Additionally, I extracted Unicode strings from the aswVmm driver using
+s -su fffff8045c840000 fffff8045c8a5000.
+Interestingly, this revealed which functions were being hooked.
+<img width="704" height="487" alt="image" src="https://github.com/user-attachments/assets/f1449ac6-3d39-489c-b5b4-c6fdb05648f3" />
 
 
 
