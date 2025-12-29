@@ -128,7 +128,7 @@ Further analysis reveals the following implementations. The first image demonstr
 
 ---
 ### a bit Reversing Drivers
-also i reversed some functions of the AswVmm and the Aswsp 
+Let’s take a quick look at these two drivers: `AswVmm` and `Aswsp` 
 
 <img width="350" height="350" alt="image" src="https://github.com/user-attachments/assets/bbe96a35-1273-41df-9b16-717f08db7523" />
 
