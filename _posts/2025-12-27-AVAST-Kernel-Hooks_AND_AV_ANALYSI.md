@@ -178,6 +178,7 @@ s -su fffff8045c840000 fffff8045c8a5000.
 Interestingly, this revealed which functions were being hooked.
 <img width="704" height="487" alt="image" src="https://github.com/user-attachments/assets/f1449ac6-3d39-489c-b5b4-c6fdb05648f3" />
 
+<img width="294" height="525" alt="image" src="https://github.com/user-attachments/assets/a28f10ed-2e00-49b9-b994-2d9c7ca4ed67" />
 
 
 
