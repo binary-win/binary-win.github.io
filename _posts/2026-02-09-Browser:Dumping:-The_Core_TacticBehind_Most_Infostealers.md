@@ -14,7 +14,8 @@ To counter this, Google introduced App-Bound Encryption (ABE) in Chrome (publicl
 **Initial Identity Verification Method**: The first iteration relies on path validation of the calling executable. While digital signature validation was considered, path validation was chosen for the initial rollout to "descope the complexity" (as noted in a 2024 update to Google's design document), deemed sufficient against the immediate threat model.
 
 Google's conceptual diagram provides a clear overview:
-https://camo.githubusercontent.com/820b98efc081b49f087006dd3726eeaf51a7b55597c5e6c1dcc3136f0a44353b/68747470733a2f2f626c6f676765722e676f6f676c6575736572636f6e74656e742e636f6d2f696d672f622f523239765a32786c2f41567658734567706a6b41436c58325676677349684c69327a416d765277564d5045654a7155687169734b48494b786266474177683870382d56374978637435617a7a6e5f6a59664a596f32697a576e4763626b56683363616262434c56515151734a414a616776465043464a7378344d696261754a716e4c56796d51596468644747633533713377534a536554505136767978586f734a2d744a524b7561616f56375f4a5f45324b4239676c535a316d334e53457745426a2d6475657667524f486c4d2f73313431362f53637265656e73686f74253230323032342d30372d3236253230322e31352e3036253230504d2e706e67
+<img width="1416" height="919" alt="image" src="https://github.com/user-attachments/assets/2f782031-ee7f-414c-84c7-0dcbf9eb79e1" />
+
 
 
 
