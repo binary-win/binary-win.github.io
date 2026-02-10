@@ -164,13 +164,22 @@ Relevance to ABE: While ABE protects data at rest on the user's device, DBSC foc
 Insights from Google's design documents and the Chromium source code (elevator.h, elevator.cc, caller_validation.h, caller_validation.cc) provide a comprehensive understanding:
 
 Original Intent vs. Implemented Reality (Path vs. Signature Validation): The initial proposal (Page 4 of the design doc) contemplated validating the digital signature of both the calling process and the IElevator service executable. However, an "Update (2024)" note clarifies that the project was descoped to use path validation for the initial implementation, primarily for simplicity, with the assessment that it offered "equivalent protection against a non-admin attacker" for the prevailing threat models at the time.
-OSCrypt Module Modifications: The core components/os_crypt module within Chromium was slated to be augmented. Instead of making direct DPAPI calls, it would use new IPC mechanisms to communicate with the Elevation Service (Pages 2, 5). The design proposed that OSCrypt would iterate through a list of "key encryption delegates" - one for legacy DPAPI keys, another for ABE-protected keys via IPC - to find a delegate capable of decrypting a given key (Page 6).
+
+OSCrypt Module Modifications: The core components/os_crypt module within Chromium was slated to be augmented. Instead of making direct DPAPI calls, it would use new IPC mechanisms to communicate with the Elevation Service (Pages 2, 5). 
+
+The design proposed that OSCrypt would iterate through a list of "key encryption delegates" - one for legacy DPAPI keys, another for ABE-protected keys via IPC - to find a delegate capable of decrypting a given key (Page 6).
+
 Stateless Nature of the Service: The IElevator service, in its role for ABE, is designed as a largely stateless encrypt/decrypt primitive. It doesn't require its own persistent storage for ABE operations (Page 4).
+
 Explicit Acknowledgment of Injection as a Bypass: Page 7 ("Weaknesses") of the design document candidly states: "An attacker could inject code into Chrome browser and call the IPC interface. It would be hard to defeat a determined attacker using this technique..." This project serves as a practical validation of this assessment.
+
 Understanding the IElevator COM Interface and its Definition:
 The IElevator interface is a standard Windows COM (Component Object Model) interface. Such interfaces define a contract between a service provider (like Chrome's Elevation Service) and a client (like Chrome's OSCrypt module, or in this project's case, the injected chrome_decrypt.dll).
+
 This contract is formally specified using MIDL (Microsoft Interface Definition Language). An .idl file written in MIDL describes the methods, parameters, and data types. The MIDL compiler processes this .idl file to generate C/C++ header files (defining the interface structure for compilers) and a type library (.tlb) that describes the interface's binary layout. It also generates proxy/stub code that enables COM to transparently manage communication between the client and server, even if they are in different processes.
+
 While this project's chrome_decrypt.dll contains a C++ stub for IElevator (using the MIDL_INTERFACE macro), this serves as a compile-time declaration of the interface's shape. The crucial elements for runtime interaction are the correct CLSID (to identify the COM component) and IID (to request the specific IElevator interface pointer) passed to CoCreateInstance.
+
 The IElevator interface, as potentially defined by Chrome, would include methods like EncryptData and DecryptData. An illustrative C++ stub, similar to what's in chrome_decrypt.cpp, is:
 ```c
 // Illustrative C++ MIDL_INTERFACE definition stub from chrome_decrypt.cpp
