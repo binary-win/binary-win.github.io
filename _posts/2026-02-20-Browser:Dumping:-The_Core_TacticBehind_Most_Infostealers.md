@@ -158,7 +158,7 @@ The IElevator interface is a standard Windows COM (Component Object Model) inter
 This contract is formally specified using MIDL (Microsoft Interface Definition Language). An .idl file written in MIDL describes the methods, parameters, and data types. The MIDL compiler processes this .idl file to generate C/C++ header files (defining the interface structure for compilers) and a type library (.tlb) that describes the interface's binary layout. It also generates proxy/stub code that enables COM to transparently manage communication between the client and server, even if they are in different processes.
 While this project's chrome_decrypt.dll contains a C++ stub for IElevator (using the MIDL_INTERFACE macro), this serves as a compile-time declaration of the interface's shape. The crucial elements for runtime interaction are the correct CLSID (to identify the COM component) and IID (to request the specific IElevator interface pointer) passed to CoCreateInstance.
 The IElevator interface, as potentially defined by Chrome, would include methods like EncryptData and DecryptData. An illustrative C++ stub, similar to what's in chrome_decrypt.cpp, is:
-```
+```c
 // Illustrative C++ MIDL_INTERFACE definition stub from chrome_decrypt.cpp
 MIDL_INTERFACE("A949CB4E-C4F9-44C4-B213-6BF8AA9AC69C") 
 IElevator : public IUnknown
@@ -184,7 +184,7 @@ public:
 ```
 
 The EncryptData method, though not called by this decryption tool, would likely use an enum like ProtectionLevel to dictate the security measures applied during the encryption of the app_bound_key. This project includes such an enum in chrome_decrypt.cpp:
-```
+```c
 // From elevation_service_idl.h (implicitly, via project's chrome_decrypt.cpp stub)
 enum class ProtectionLevel // As used by IElevator
 {
