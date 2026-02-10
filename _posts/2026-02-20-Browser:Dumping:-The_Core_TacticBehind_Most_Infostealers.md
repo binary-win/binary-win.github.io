@@ -230,7 +230,7 @@ Standardizing Program Files (x86) to Program Files. This ensures that different 
 
 
 
-### Browser Process Termination (KillBrowserProcesses)
+#### Browser Process Termination (KillBrowserProcesses)
 
 
 
@@ -238,15 +238,22 @@ Standardizing Program Files (x86) to Program Files. This ensures that different 
 
 Rationale: This is primarily to ensure that SQLite database files (Cookies, Login Data, Web Data) are not locked by live browser instances and that the IElevator COM server can initialize in a clean state, potentially avoiding conflicts or issues if existing browser instances have the service in an unusual state.
 User Impact: This is a disruptive action. Future enhancements to this tool could explore less intrusive methods, such as attempting to copy the database files to a temporary location and operating on those copies, or implementing a more conditional termination strategy (e.g., only if initial COM instantiation or DB access fails).
+
 7.2. Multi-Profile Support
 Currently, this tool primarily targets the Default user profile within the browser's user data directory. Comprehensive support for environments with multiple Chrome profiles would involve:
 
 Enumerating all active profile directories (e.g., Profile 1, Profile 2, etc.) within the main User Data folder.
 Applying the (likely single, shared per User Data instance) app_bound_key to decrypt data from each profile's respective SQLite databases, as the key is tied to the overall user data directory, not individual sub-profiles.
-7.3. Roaming Profiles and Enterprise Environments
-Google's public communications on ABE explicitly state that it "will not function correctly in environments where Chrome profiles roam between multiple machines." This is because the underlying DPAPI protection for the app_bound_key is inherently machine-bound (and user-bound). If an enterprise requires support for roaming profiles, they are encouraged to follow existing best practices. For scenarios where ABE might cause incompatibility, Chrome provides the ApplicationBoundEncryptionEnabled enterprise policy to configure or disable this feature.
 
-8. Conclusion and Future Directions for ABE Research
+7.3. Roaming Profiles and Enterprise Environments Google's public communications on ABE explicitly state that it "will not function correctly in environments where Chrome profiles roam between multiple machines." This is because the underlying DPAPI protection for the app_bound_key is inherently machine-bound (and user-bound). If an enterprise requires support for roaming profiles, they are encouraged to follow existing best practices. For scenarios where ABE might cause incompatibility, Chrome provides the ApplicationBoundEncryptionEnabled enterprise policy to configure or disable this feature.
+
+Computer Configuration
+ └ Administrative Templates
+   └ Google
+     └ Google Chrome
+
+
+#### 8. Conclusion and Future Directions for ABE Research
 App-Bound Encryption marks a commendable and significant enhancement in securing locally stored Chrome data on the Windows platform. By fundamentally tying decryption capabilities to a path-validated COM service, Google has effectively "moved the goalposts" for attackers, compelling them to resort to either privilege escalation or code injection into Chrome itself - both of which are generally "noisier" and more readily detectable actions than straightforward, unprivileged DPAPI calls.
 
 This project, through its implementation of a user-mode DLL injection technique, serves multiple purposes:
@@ -258,6 +265,7 @@ The ongoing evolution of Chrome and its security mechanisms means that ABE resea
 
 Monitoring the IElevator service: Tracking any changes to its CLSIDs, IIDs, interface methods, or the core validation logic (e.g., a potential future shift from path validation to digital signature validation, as originally contemplated).
 Deep Analysis of Undocumented Structures: Further reverse engineering efforts to understand elements like the 32-byte prefix observed in decrypted cookie plaintext.
+
 Chrome's Detection and Mitigation of Injection Techniques: As Google and security vendors work to make code injection "more detectable," understanding these evolving detection strategies and their impact will be crucial.
 Impact of Further OS-Level Hardening: Investigating how improvements in Windows process integrity, application isolation primitives, or EDR technologies might affect ABE and bypass techniques.
 The landscape of browser security is one of constant flux. App-Bound Encryption is a critical new defensive layer, and the continued efforts of the research community will be essential for a comprehensive understanding of its strengths, its limitations, and its trajectory in the face of ever-adapting threats.
@@ -269,7 +277,7 @@ The landscape of browser security is one of constant flux. App-Bound Encryption 
 
 
 
-9. References and Further Reading
+#### 9. References and Further Reading
 Google Security Blog: Improving the security of Chrome cookies on Windows (July 30, 2024)
 https://security.googleblog.com/2024/07/improving-security-of-chrome-cookies-on.html
 
