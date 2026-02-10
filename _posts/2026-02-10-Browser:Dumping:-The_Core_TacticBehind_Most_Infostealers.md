@@ -2,6 +2,10 @@
 
 > **This blog is a collection of my own research from the internet, along with insights from other blogs and studies. While similar information can be found elsewhere, my main goal is to write everything in my own words and style. Please consider this as my personal notes and learning journal.**
 
+
+In today’s threat landscape, credential stuffing, ransomware affiliate attacks, and initial access sales are fueled almost entirely by stolen credentials. At the heart of nearly every major infostealer family lies one dominant technique: Browser Dumping.
+This method is responsible for the vast majority of compromised accounts traded on underground markets — billions of credentials, cookies, and tokens harvested year after year. 
+
 #### 1. Introduction: The Evolution of Local Data Protection in Chrome
 For years, Chromium-based browsers on Windows relied on the Data Protection API (DPAPI) to secure sensitive user data stored locally such as cookies, passwords, payment information, and the like. DPAPI binds data to the logged-in user's credentials, offering a solid baseline against offline attacks (e.g., a stolen hard drive) and unauthorized access by other users on the same machine. However, DPAPI's Achilles' heel has always been its permissiveness within the user's own session: any application running as the same user, with the same privilege level as Chrome, can invoke CryptUnprotectData and decrypt this data. This vulnerability has been a perennial favorite for infostealer malware.
 
