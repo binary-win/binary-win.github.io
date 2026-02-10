@@ -137,7 +137,17 @@ Stability Concerns: Relying on such internal administrator-level method, undocum
 Attackers had also turned to Chrome's remote debugging capabilities as a vector to exfiltrate cookies, effectively sidestepping ABE's file-based protections.
 
 Chrome's Countermeasure (Chrome 136+): As detailed in a Chrome Developers blog post, Google addressed this by changing the behavior of the --remote-debugging-port and --remote-debugging-pipe command-line switches. Starting with Chrome 136, these switches will no longer function when Chrome is launched with its default user data directory. To enable remote debugging, users must now also specify the --user-data-dir switch, pointing Chrome to a non-standard, separate data directory. This ensures that any debugging session operates on an isolated profile, using a different encryption key, thereby safeguarding the user's primary profile data.
+`chrome.exe --remote-debugging-port=9222 --headless --window-position=-3000,-3000`
+then get the cookies via Network.getAllCookies via chrome debugging protocol 
+
 Bypass Simplicity: While this change adds a hurdle, it's worth noting that an attacker can control Chrome's launch parameters (e.g., by modifying shortcuts or through malware that relaunches Chrome), they could potentially still launch Chrome with both --remote-debugging-port and a temporary --user-data-dir, then attempt to import or access data if Chrome allows such operations into a fresh, debuggable profile. The effectiveness of the debug port mitigation hinges on preventing unauthorized modification of launch parameters and on Chrome's policies regarding data access in such scenarios.
+
+بدون مشخص کردن --user-data-dir جداگانه → دیباگ کار نمی‌کند
+→ با --user-data-dir جداگانه → فقط پروفایل خالی/جدید باز می‌شود → کوکی اصلی شما آنجا نیست
+
+
+
+
 #### 5.3. Device Bound Session Credentials (DBSC)
 As an overlapping and complementary security effort, Google has been developing Device Bound Session Credentials (DBSC), available for Origin Trial in Chrome 135. DBSC aims to combat cookie theft by cryptographically binding session cookies to the device.
 
