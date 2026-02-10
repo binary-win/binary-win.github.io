@@ -72,6 +72,7 @@ When Chrome (or this project's injected DLL) needs the plaintext `app_bound_key`
 It instantiates the IElevator COM object using browser-specific CLSIDs/IIDs:
 - Google Chrome: CLSID: `{708860E0-F641-4611-8895-7D867DD3675B}`, IID: `{463ABECF-410D-407F-8AF5-0DF35A005CC8}`
 - Microsoft MsEdge: CLSID: `{1FCBE96C-1697-43AF-9140-2897C7C69767}` , IID: `{C9C2B807-7731-4F34-81B7-44FF7779522B}`
+
 The APPB-prefixed, Base64-encoded string from Local State is decoded and the APPB prefix stripped. This resulting blob (the doubly DPAPI-wrapped key) is passed to IElevator::DecryptData.
 
 5.**Unwrapping and Path Validation by `IElevator::DecryptData`:**
