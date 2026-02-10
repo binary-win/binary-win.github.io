@@ -115,8 +115,7 @@ Unlike cookies, the entire decrypted plaintext (after accounting for the v20 pre
 
 
 
-
-Alternative Decryption Vectors & Chrome's Evolving Defenses
+### Alternative Decryption Vectors & Chrome's Evolving Defenses
 #### 5.1. Administrator-Level Decryption (e.g., runassu/chrome_v20_decryption PoC)
 The proof-of-concept by runassu illustrates that if an attacker possesses Administrator privileges, the app_bound_key can potentially be decrypted. This aligns with ABE's stated non-goal of protecting against higher-privilege attackers.
 
