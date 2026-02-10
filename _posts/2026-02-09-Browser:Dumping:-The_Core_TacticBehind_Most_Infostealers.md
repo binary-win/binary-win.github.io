@@ -47,8 +47,10 @@ System-Context DPAPI Encryption (Outer Layer): The result from the user-context 
 This doubly DPAPI-wrapped blob is what IElevator::EncryptData returns as the ciphertext BSTR.
 
 
-As you can see it expose only the `Interface {1BF5208B-295F-4992-B5F4-3A9BB6494838}`
-<img width="735" height="288" alt="image" src="https://github.com/user-attachments/assets/0f6f3b83-fb39-4cb8-9839-b90aa3095200" />
+As you can see it expose only the `Interface {1BF5208B-295F-4992-B5F4-3A9BB6494838}` : **IElevator2Chrome**
+
+<img width="591" height="109" alt="image" src="https://github.com/user-attachments/assets/dbd7e8d6-023c-4017-9f27-8501e18b43cc" />
+
 
 
 <img width="817" height="488" alt="image" src="https://github.com/user-attachments/assets/ded7ef0e-c4a9-47ac-8fa3-d39a6520eed8" />
