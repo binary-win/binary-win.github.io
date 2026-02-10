@@ -56,15 +56,59 @@ As you can see it expose only the `Interface {1BF5208B-295F-4992-B5F4-3A9BB64948
 <img width="817" height="488" alt="image" src="https://github.com/user-attachments/assets/ded7ef0e-c4a9-47ac-8fa3-d39a6520eed8" />
 
 
-
-
+In addition, you can explore other interfaces that are not exposed in the current channel (e.g., Stable), but are registered and available in specific Chrome channels like Beta, Dev, Canary, or Chromium builds.
 
 <img width="1066" height="329" alt="image" src="https://github.com/user-attachments/assets/564e0614-d436-4b68-ad8f-a44a0f0870d6" />
 
 
 
+3.**Storage in `Local State`:**
+- The ciphertext BSTR received from `IElevator::EncryptData` is Base64-encoded.
+- The prefix APPB (ASCII: `0x41 0x50 0x50 0x42`) is prepended.
+- This final string is stored in Local State as `os_crypt.app_bound_encrypted_key`.
 
-3.**Storage in Local State:**
+4.**The IElevator COM Service (The Gatekeeper for Decryption):**
+When Chrome (or this project's injected DLL) needs the plaintext `app_bound_key`.
+It instantiates the IElevator COM object using browser-specific CLSIDs/IIDs:
+- Google Chrome: CLSID: `{708860E0-F641-4611-8895-7D867DD3675B}`, IID: `{463ABECF-410D-407F-8AF5-0DF35A005CC8}`
+- Microsoft MsEdge: CLSID: `{1FCBE96C-1697-43AF-9140-2897C7C69767}` , IID: `{C9C2B807-7731-4F34-81B7-44FF7779522B}`
+The APPB-prefixed, Base64-encoded string from Local State is decoded and the APPB prefix stripped. This resulting blob (the doubly DPAPI-wrapped key) is passed to IElevator::DecryptData.
+
+5.**Unwrapping and Path Validation by `IElevator::DecryptData`:**
+- System-Context DPAPI Decryption: The input blob is first decrypted using CryptUnprotectData under the SYSTEM DPAPI context. This removes the outer DPAPI layer.
+
+- User-Context DPAPI Decryption: The intermediate result is then decrypted using CryptUnprotectData under the calling user's DPAPI context (via ScopedClientImpersonation). This removes the inner DPAPI layer, yielding a plaintext blob.
+
+- Extraction of Validation Data and Plaintext Key: This plaintext blob is structured as `[validation_data_length] [validation_data][app_bound_key_length][app_bound_key]`. The service uses `PopFromStringFront` to extract the original validation_data and then the `app_bound_key`.
+
+
+6.Data Encryption/Decryption using the app_bound_key:
+Chrome's OSCrypt (or this project's DLL) then uses this recovered 32-byte AES key with AES-256-GCM to encrypt/decrypt actual user data (cookies, passwords), which are typically prefixed (e.g., v20).
+
+#### 3. Circumventing ABE Path Validation: The chrome-inject Strategy
+The chrome_inject.exe and chrome_decrypt.dll tools developed in this project effectively bypass ABE's path validation by orchestrating the sensitive COM calls to IElevator::DecryptData to execute from within the legitimate browser's own process space. This approach aligns with the "Weaknesses" section of Google's ABE design document (Page 7), which explicitly notes: "An attacker could inject code into Chrome browser and call the IPC interface." This project implements such a technique, not for malicious purposes, but for security research, data recovery exploration, and, for me, as a fascinating practical learning exercise in Windows internals, COM, and process manipulation.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
