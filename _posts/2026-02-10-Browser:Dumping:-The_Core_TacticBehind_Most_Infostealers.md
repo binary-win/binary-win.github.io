@@ -16,6 +16,47 @@ This method is responsible for the vast majority of compromised accounts traded 
 #### 1. **Introduction: The Evolution of Local Data Protection in Chrome**
 For years, **Chromium-based** browsers on Windows relied on the Data Protection API `(DPAPI)` to secure sensitive user data stored locally such as `cookies`, `passwords`, `payment information`, and the like. `DPAPI` binds data to the **logged-in user's credentials**, offering a solid baseline against offline attacks (e.g., a stolen hard drive) and unauthorized access by other users on the **same machine**. However, DPAPI's Achilles' heel has always been its permissiveness within the user's own session: any application running as the same user, with the same privilege level as Chrome, can invoke `CryptUnprotectData` and decrypt this data. This vulnerability has been a perennial favorite for **infostealer malware**.
 
+### Decrypt the V10 Key of Chrome ( DPAPI )
+Found **Local State** `::os_crypt:encrypted_key `( DPAPI decryption)
+
+```c
+Start
+  ↓
+Read Local State (JSON)
+  ↓
+Extract "encrypted_key" (Base64)
+  ↓
+Decode Base64
+  ↓
+Remove "DPAPI" prefix
+  ↓
+CryptUnprotectData() → Master Key
+  ↓
+Open Login Data (SQLite)
+  ↓
+For each password:
+  ├─ Check prefix (v10)
+  ├─ v10 → DPAPI decrypt  [v] [1] [0] [DPAPI encrypted data...]
+  ↓
+Display results
+  ↓
+End
+
+
+┌──────────────────────────────────────────────────────────────────┐
+│  v10 Encrypted BLOB Format (Chromium / Chrome / Edge / etc.)     
+└──────────────────────────────────────────────────────────────────┘
+   ↓
+┌───┬───┬───┬────────────────┬──────────────────────────┬──────────────────┐
+│ v │ 2 │ 0 │   Nonce (12)   │   Ciphertext        │   Tag (16)       │
+└───┴───┴───┴────────────────┴──────────────────────────┴──────────────────┘
+  0   1   2 |----- 
+
+```
+
+
+
+
 To counter this, Google introduced `App-Bound Encryption (ABE)` in Chrome (_publicly announced around version 127, July 2024_). `ABE` is a significant architectural shift designed to dramatically raise the bar for attackers. Its core principle is to ensure that the primary decryption keys for sensitive Chrome data are only accessible to legitimate Chrome processes, thereby mitigating trivial data theft by same-user, same-privilege malware.
 
 #### **1.1. Foundational Concepts of ABE**
