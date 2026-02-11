@@ -1,6 +1,6 @@
 # **Browser Dumping: The Core Tactic Behind Most Infostealers**
 
-> **This blog is a collection of my own research from the internet, along with insights from other blogs and studies. While similar information can be found elsewhere, my main goal is to write everything in my own words and style. Please consider this as my personal notes and learning journal.**
+> **This blog contains my own research collected from the internet, along with ideas from other blogs and studies. While many parts are written in my own words, some sections were copied directly from external sources because they were already very well written and clearly expressed. This blog is mainly for sharing my personal notes and learning journey. **
 
 
 In today’s threat landscape, **credential stuffing**, **ransomware affiliate attacks**, and **initial access** sales are fueled almost entirely by **stolen credentials**. At the heart of nearly every major infostealer family lies one dominant technique: **Browser Dumping**.
@@ -94,25 +94,23 @@ The APPB-prefixed, Base64-encoded string from **Local State** is decoded and the
 **Data Encryption/Decryption using the app_bound_key:**
 Chrome's OSCrypt then uses this recovered **32-byte AES** key with **AES-256-GCM** to **encrypt/decrypt** actual user data (`cookies`, `passwords`), **which are typically prefixed (e.g., v20).**
 
+----
 
+#### **3. Dissecting Encrypted Data Structures**
 
-#### 3. Dissecting Encrypted Data Structures
+**Local State and the app_bound_encrypted_key**
+_Typical Location_: `%LOCALAPPDATA%\<BrowserVendor>\<BrowserName>\User Data\Local State`
+_Relevant JSON Key_: `os_crypt.app_bound_encrypted_key`.
+_Format A string value_: ` "APPB<Base64EncodedSystemDPAPIWrappedUserDPAPIWrappedValidationDataAndKey>"`.
 
-4.1. Local State and the app_bound_encrypted_key
-Typical Location: `%LOCALAPPDATA%\<BrowserVendor>\<BrowserName>\User Data\Local State ` (e.g., Google\Chrome\User Data\Local State).
-Relevant JSON Key: `os_crypt.app_bound_encrypted_key`.
-Format: A string value: ` "APPB<Base64EncodedSystemDPAPIWrappedUserDPAPIWrappedValidationDataAndKey>"`.
+**Data items encrypted with the app_bound_key generally adhere to a consistent format:**
+**Prefix**: A version or type prefix string. For `cookies`, `passwords`, and `payment data` observed thus far, this is typically **v20** `(ASCII: 0x76 0x32 0x30)` . Older data encrypted solely with DPAPI might use **prefixes** like `v10` or `v11`.
+**Nonce (IV):** A `12-byte` Initialization Vector, essential for the security of **AES-GCM** mode.
+**Ciphertext:** The actual encrypted data, variable in length.
+**Authentication Tag:** A `16-byte` GCM authentication tag, which ensures both the integrity and authenticity of the decrypted ciphertext.
 
-
-
-Data items encrypted with the app_bound_key generally adhere to a consistent format:
-
-Prefix: A version or type prefix string. For cookies, passwords, and payment data observed thus far, this is typically v20 `(ASCII: 0x76 0x32 0x30)` . Older data encrypted solely with DPAPI might use prefixes like v10 or v11.
-Nonce (IV): A 12-byte Initialization Vector, essential for the security of AES-GCM mode.
-Ciphertext: The actual encrypted data, variable in length.
-Authentication Tag: A 16-byte GCM authentication tag, which ensures both the integrity and authenticity of the decrypted ciphertext.
-Overall Blob Structure:
-` [Prefix (e.g., 3 bytes for "v20")][IV (12 bytes)][Ciphertext (variable length)][Tag (16 bytes)]`
+**Overall Blob Structure:**
+`[Prefix (e.g., 3 bytes for "v20")][IV (12 bytes)][Ciphertext (variable length)][Tag (16 bytes)]`
 
 
 4.3. Cookie Value Specifics (from encrypted_value in Cookies DB)
