@@ -8,7 +8,7 @@ This method is responsible for the vast majority of compromised accounts traded 
 
 
 <img width="860" height="520" alt="image" src="https://github.com/user-attachments/assets/27e154b7-c5d0-435a-802f-d96fd61a2539" />
-
+Advertisement for TitanStealer, first offered for sale in November 2022 via the Russian-language BHF and Dark2Web forums (Source: Kela)
 
 
 
