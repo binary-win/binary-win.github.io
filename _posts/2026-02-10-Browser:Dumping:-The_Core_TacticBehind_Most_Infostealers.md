@@ -113,12 +113,14 @@ _Format A string value_: ` "APPB<Base64EncodedSystemDPAPIWrappedUserDPAPIWrapped
 `[Prefix (e.g., 3 bytes for "v20")][IV (12 bytes)][Ciphertext (variable length)][Tag (16 bytes)]`
 
 
-4.3. Cookie Value Specifics (from encrypted_value in Cookies DB)
+**Cookie Value Specifics (from encrypted_value in Cookies DB)**
 A notable observation during the development of this tool is that after successfully decrypting a v20-prefixed cookie blob using AES-GCM with the app_bound_key, the first 32 bytes of the resulting plaintext appear to be some form of metadata or padding. The actual cookie value string begins after this DECRYPTED_COOKIE_VALUE_OFFSET of 32 bytes.
-4.4. Passwords (from password_value in Login Data DB) & Payment Information
-These data types also use v20-prefixed blobs.
-Unlike cookies, the entire decrypted plaintext (after accounting for the v20 prefix, IV, and tag during the AES-GCM decryption process) is generally considered to be the sensitive value itself (e.g., the password string, credit card number, or CVC).
 
+**Passwords (from password_value in Login Data DB) & Payment Information**
+These data types also use `v20-prefixed` blobs.
+Unlike cookies, the entire decrypted plaintext (after accounting for the v20 prefix, IV, and tag during the AES-GCM decryption process) is generally considered to be the sensitive value itself (e.g., the password string, credit card number, or CVC).
+-------
+-----
 ---
 
 ### Alternative Decryption Vectors & Chrome's Evolving Defenses
