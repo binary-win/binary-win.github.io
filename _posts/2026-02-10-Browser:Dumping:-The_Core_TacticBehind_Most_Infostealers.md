@@ -153,6 +153,15 @@ Alternatively, the PoC might be targeting a different internal key or an older/v
 <img width="817" height="250" alt="image" src="https://github.com/user-attachments/assets/798e3a77-b8c0-407c-9465-cafa44c52b3a" />
 
 
+
+[HardCoded KEYs:](https://github.com/bitwarden/clients/blob/main/apps/desktop/desktop_native/bitwarden_chromium_import_helper/src/windows/crypto.rs)
+
+<img width="971" height="748" alt="image" src="https://github.com/user-attachments/assets/06a86a96-ece1-4ae9-8ca7-f572cf00d405" />
+
+<img width="803" height="363" alt="image" src="https://github.com/user-attachments/assets/b4ef21ca-7c7d-4a7b-b137-8610eb37f3de" />
+
+
+
 ----
 
 
