@@ -6,10 +6,17 @@
 In today’s threat landscape, **credential stuffing**, **ransomware affiliate attacks**, and **initial access** sales are fueled almost entirely by **stolen credentials**. At the heart of nearly every major infostealer family lies one dominant technique: **Browser Dumping**.
 This method is responsible for the vast majority of compromised accounts traded on underground markets. billions of **credentials**, **cookies**, and **tokens** harvested year after year. 
 
-#### 1. **Introduction: The Evolution of Local Data Protection in Chrome**
-For years, Chromium-based browsers on Windows relied on the Data Protection API (DPAPI) to secure sensitive user data stored locally such as cookies, passwords, payment information, and the like. DPAPI binds data to the logged-in user's credentials, offering a solid baseline against offline attacks (e.g., a stolen hard drive) and unauthorized access by other users on the same machine. However, DPAPI's Achilles' heel has always been its permissiveness within the user's own session: any application running as the same user, with the same privilege level as Chrome, can invoke CryptUnprotectData and decrypt this data. This vulnerability has been a perennial favorite for infostealer malware.
 
-To counter this, Google introduced App-Bound Encryption (ABE) in Chrome (publicly announced around version 127, July 2024). ABE is a significant architectural shift designed to dramatically raise the bar for attackers. Its core principle is to ensure that the primary decryption keys for sensitive Chrome data are only accessible to legitimate Chrome processes, thereby mitigating trivial data theft by same-user, same-privilege malware.
+<img width="860" height="520" alt="image" src="https://github.com/user-attachments/assets/27e154b7-c5d0-435a-802f-d96fd61a2539" />
+
+
+
+
+
+#### 1. **Introduction: The Evolution of Local Data Protection in Chrome**
+For years, **Chromium-based** browsers on Windows relied on the Data Protection API `(DPAPI)` to secure sensitive user data stored locally such as `cookies`, `passwords`, `payment information`, and the like. `DPAPI` binds data to the **logged-in user's credentials**, offering a solid baseline against offline attacks (e.g., a stolen hard drive) and unauthorized access by other users on the **same machine**. However, DPAPI's Achilles' heel has always been its permissiveness within the user's own session: any application running as the same user, with the same privilege level as Chrome, can invoke `CryptUnprotectData` and decrypt this data. This vulnerability has been a perennial favorite for **infostealer malware**.
+
+To counter this, Google introduced `App-Bound Encryption (ABE)` in Chrome (_publicly announced around version 127, July 2024_). `ABE` is a significant architectural shift designed to dramatically raise the bar for attackers. Its core principle is to ensure that the primary decryption keys for sensitive Chrome data are only accessible to legitimate Chrome processes, thereby mitigating trivial data theft by same-user, same-privilege malware.
 
 #### **1.1. Foundational Concepts of ABE**
 **Primary Goal**: Prevent an attacker operating with the same privilege level as Chrome from trivially calling DPAPI to decrypt sensitive data.
