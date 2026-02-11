@@ -1,6 +1,6 @@
 # **Browser Dumping: The Core Tactic Behind Most Infostealers**
 
-> **This blog contains my own research collected from the internet, along with ideas from other blogs and studies. While many parts are written in my own words, some sections were copied directly from external sources because they were already very well written and clearly expressed. This blog is mainly for sharing my personal notes and learning journey. **
+> **This blog contains my own research collected from the internet, along with ideas from other blogs and studies. While many parts are written in my own words, the Most sections were copied directly from [external sources](https://github.com/xaitax/Chrome-App-Bound-Encryption-Decryption/blob/main/docs/RESEARCH.md) because they were already very well written and clearly expressed. This blog is mainly for sharing my personal notes and learning journey. **
 
 
 In today’s threat landscape, **credential stuffing**, **ransomware affiliate attacks**, and **initial access** sales are fueled almost entirely by **stolen credentials**. At the heart of nearly every major infostealer family lies one dominant technique: **Browser Dumping**.
