@@ -35,27 +35,24 @@ Google's conceptual diagram provides a clear overview:
 #### 2. **The ABE Mechanism: A Step-by-Step Breakdown**
 ABE employs a multi-layered strategy for key management and data encryption:
 
-1.**The app_bound_key (Session Key):**
-A unique 32-byte AES-256 key is the target plaintext that applications like Chrome's OSCrypt use.
+**The app_bound_key (Session Key):**
+A unique **32-byte AES-256** key is the target plaintext that applications like Chrome's OSCrypt use.
 This key is what that use to recover for subsequent data decryption.
 
-2.**Generation of `validation_data`  and `app_bound_key` Wrapping (During Encryption by Chrome):**
+**Generation of `validation_data`  and `app_bound_key` Wrapping (During Encryption by Chrome):**
 - When Chrome (via OSCrypt) needs to protect the app_bound_key using ABE, it calls the IElevator::EncryptData COM method.
 - **Caller Validation Data Generation**: Inside `IElevator::EncryptData`, the service first generates `validation_data`. If `ProtectionLevel::PROTECTION_PATH_VALIDATION` is specified, this involves:
-  -  Obtaining the calling process's executable path (GetProcessExecutablePath).
-  - Normalizing this path using a specific routine (MaybeTrimProcessPath), which removes the .exe name, common temporary/application subfolders (like "Application", "Temp", version strings), and standardizes "Program Files (x86)" to "Program Files". This results in a canonical base installation path.
+  -  Obtaining the calling process's executable path (`GetProcessExecutablePath`).
+  - Normalizing this path using a specific routine (`MaybeTrimProcessPath`), which removes the .exe name, common temporary/application subfolders (like "Application", "Temp", version strings), and standardizes "Program Files (x86)" to "Program Files". This results in a canonical base installation path.
 
-This normalized path string (UTF-8 encoded) becomes the core of the validation_data. The ProtectionLevel itself is also prepended to this data.
-
-
-Payload Construction: The validation_data (with its length) is prepended to the plaintext app_bound_key (also with its length). This forms the data_to_encrypt.
+- This normalized path string (UTF-8 encoded) becomes the core of the validation_data. The ProtectionLevel itself is also prepended to this data.
 
 
-User-Context DPAPI Encryption: This data_to_encrypt blob is then encrypted using CryptProtectData under the calling user's DPAPI context (achieved via ScopedClientImpersonation).
+**User-Context DPAPI Encryption**: This `data_to_encrypt` blob is then encrypted using `CryptProtectData` under the **calling user's DPAPI context** (achieved via `ScopedClientImpersonation`).
 
-System-Context DPAPI Encryption (Outer Layer): The result from the user-context DPAPI encryption is then encrypted again using CryptProtectData, this time under the SYSTEM DPAPI context (or the service's own context if not explicitly SYSTEM). This creates a "DPAPI-ception" or layered DPAPI protection.
+**System-Context DPAPI Encryption (Outer Layer):** The result from the **user-context DPAPI encryption** is then encrypted again using `CryptProtectData`, this time under the **SYSTEM DPAPI** context (or the service's own context if not explicitly SYSTEM). This creates a "**DPAPI-ception**" or layered DPAPI protection.
 
-This doubly DPAPI-wrapped blob is what IElevator::EncryptData returns as the ciphertext BSTR.
+**This doubly DPAPI-wrapped blob is what IElevator::EncryptData returns as the ciphertext BSTR.**
 
 
 As you can see it expose only the `Interface {1BF5208B-295F-4992-B5F4-3A9BB6494838}` : **IElevator2Chrome**
@@ -143,6 +140,7 @@ Alternatively, the PoC might be targeting a different internal key or an older/v
 Hardcoded Keys in elevation_service.exe: The presence of hardcoded keys in elevation_service.exe (as mentioned by the PoC for ChaCha20_Poly1305 or AES-256-GCM) would most likely be for such internal service operations or specific recovery mechanisms, rather than the primary ABE flow that returns the key to OSCrypt.
 Stability Concerns: Relying on such internal administrator-level method, undocumented layers and hardcoded keys is highly unstable and prone to break with Chrome updates. The method employed by this project (injecting and calling the official IElevator::DecryptData COM interface) is more aligned with the intended client interaction path and thus inherently more stable, despite the injection vector.
 
+<img width="817" height="250" alt="image" src="https://github.com/user-attachments/assets/798e3a77-b8c0-407c-9465-cafa44c52b3a" />
 
 
 
@@ -300,6 +298,9 @@ The landscape of browser security is one of constant flux. App-Bound Encryption 
 
 
 #### 9. References and Further Reading
+- the main one [xaitax](https://github.com/xaitax/Chrome-App-Bound-Encryption-Decryption/blob/main/docs/RESEARCH.md )
+
+
 Google Security Blog: Improving the security of Chrome cookies on Windows (July 30, 2024)
 https://security.googleblog.com/2024/07/improving-security-of-chrome-cookies-on.html
 
@@ -329,8 +330,7 @@ https://github.com/SilentDev33/ChromeAppBound-key-injection
 
 
 
-
-https://github.com/xaitax/Chrome-App-Bound-Encryption-Decryption/blob/main/docs/RESEARCH.md
+ 
 
 
 
