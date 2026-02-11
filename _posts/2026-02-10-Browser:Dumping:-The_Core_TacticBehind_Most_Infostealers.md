@@ -1,17 +1,17 @@
-# Browser Dumping: The Core Tactic Behind Most Infostealers
+# **Browser Dumping: The Core Tactic Behind Most Infostealers**
 
 > **This blog is a collection of my own research from the internet, along with insights from other blogs and studies. While similar information can be found elsewhere, my main goal is to write everything in my own words and style. Please consider this as my personal notes and learning journal.**
 
 
-In today’s threat landscape, credential stuffing, ransomware affiliate attacks, and initial access sales are fueled almost entirely by stolen credentials. At the heart of nearly every major infostealer family lies one dominant technique: Browser Dumping.
-This method is responsible for the vast majority of compromised accounts traded on underground markets — billions of credentials, cookies, and tokens harvested year after year. 
+In today’s threat landscape, **credential stuffing**, **ransomware affiliate attacks**, and **initial access** sales are fueled almost entirely by **stolen credentials**. At the heart of nearly every major infostealer family lies one dominant technique: **Browser Dumping**.
+This method is responsible for the vast majority of compromised accounts traded on underground markets. billions of **credentials**, **cookies**, and **tokens** harvested year after year. 
 
-#### 1. Introduction: The Evolution of Local Data Protection in Chrome
+#### 1. **Introduction: The Evolution of Local Data Protection in Chrome**
 For years, Chromium-based browsers on Windows relied on the Data Protection API (DPAPI) to secure sensitive user data stored locally such as cookies, passwords, payment information, and the like. DPAPI binds data to the logged-in user's credentials, offering a solid baseline against offline attacks (e.g., a stolen hard drive) and unauthorized access by other users on the same machine. However, DPAPI's Achilles' heel has always been its permissiveness within the user's own session: any application running as the same user, with the same privilege level as Chrome, can invoke CryptUnprotectData and decrypt this data. This vulnerability has been a perennial favorite for infostealer malware.
 
 To counter this, Google introduced App-Bound Encryption (ABE) in Chrome (publicly announced around version 127, July 2024). ABE is a significant architectural shift designed to dramatically raise the bar for attackers. Its core principle is to ensure that the primary decryption keys for sensitive Chrome data are only accessible to legitimate Chrome processes, thereby mitigating trivial data theft by same-user, same-privilege malware.
 
-#### 1.1. Foundational Concepts of ABE
+#### **1.1. Foundational Concepts of ABE**
 **Primary Goal**: Prevent an attacker operating with the same privilege level as Chrome from trivially calling DPAPI to decrypt sensitive data.
 
 **Acknowledged Limitations (Non-Goals)**: ABE does not aim to prevent attackers with higher privileges (Administrator, SYSTEM, kernel drivers) or those who can successfully inject code into Chrome. The official Google design documents explicitly recognize code injection as a potent bypass vector, a technique this project leverages for legitimate research and data recovery demonstrations.
@@ -25,7 +25,7 @@ Google's conceptual diagram provides a clear overview:
 
 ---
 
-#### 2. The ABE Mechanism: A Step-by-Step Breakdown
+#### 2. **The ABE Mechanism: A Step-by-Step Breakdown**
 ABE employs a multi-layered strategy for key management and data encryption:
 
 1.**The app_bound_key (Session Key):**
@@ -117,13 +117,13 @@ A notable observation during the development of this tool is that after successf
 These data types also use v20-prefixed blobs.
 Unlike cookies, the entire decrypted plaintext (after accounting for the v20 prefix, IV, and tag during the AES-GCM decryption process) is generally considered to be the sensitive value itself (e.g., the password string, credit card number, or CVC).
 
-
+---
 
 ### Alternative Decryption Vectors & Chrome's Evolving Defenses
+
 #### 5.1. Administrator-Level Decryption (e.g., runassu/chrome_v20_decryption PoC)
 The proof-of-concept by runassu illustrates that if an attacker possesses Administrator privileges, the app_bound_key can potentially be decrypted. This aligns with ABE's stated non-goal of protecting against higher-privilege attackers.
-
-https://github.com/runassu/chrome_v20_decryption?tab=readme-ov-file
+[REPO](https://github.com/runassu/chrome_v20_decryption?tab=readme-ov-file)
 
 The PoC's description of needing to decrypt the app_bound_encrypted_key from Local State first with SYSTEM DPAPI, then user DPAPI, directly matches the initial steps within the legitimate IElevator::DecryptData function as seen in elevator.cc. An administrator can perform these steps outside of the IElevator service.
 
@@ -137,6 +137,9 @@ Hardcoded Keys in elevation_service.exe: The presence of hardcoded keys in eleva
 Stability Concerns: Relying on such internal administrator-level method, undocumented layers and hardcoded keys is highly unstable and prone to break with Chrome updates. The method employed by this project (injecting and calling the official IElevator::DecryptData COM interface) is more aligned with the intended client interaction path and thus inherently more stable, despite the injection vector.
 
 
+
+
+
 #### 5.2. Remote Debugging Port (--remote-debugging-port) and Its Mitigation
 Attackers had also turned to Chrome's remote debugging capabilities as a vector to exfiltrate cookies, effectively sidestepping ABE's file-based protections.
 
@@ -146,8 +149,11 @@ then get the cookies via Network.getAllCookies via chrome debugging protocol
 
 Bypass Simplicity: While this change adds a hurdle, it's worth noting that an attacker can control Chrome's launch parameters (e.g., by modifying shortcuts or through malware that relaunches Chrome), they could potentially still launch Chrome with both --remote-debugging-port and a temporary --user-data-dir, then attempt to import or access data if Chrome allows such operations into a fresh, debuggable profile. The effectiveness of the debug port mitigation hinges on preventing unauthorized modification of launch parameters and on Chrome's policies regarding data access in such scenarios.
 
+
 بدون مشخص کردن --user-data-dir جداگانه → دیباگ کار نمی‌کند
 → با --user-data-dir جداگانه → فقط پروفایل خالی/جدید باز می‌شود → کوکی اصلی شما آنجا نیست
+
+
 
 
 
@@ -157,6 +163,11 @@ As an overlapping and complementary security effort, Google has been developing 
 
 Mechanism: When a DBSC session is initiated, the browser generates a public-private key pair, storing the private key securely (ideally using hardware like a TPM). The server associates the session with the public key. Periodically, the browser proves possession of the private key to refresh the (typically short-lived) session cookie.
 Relevance to ABE: While ABE protects data at rest on the user's device, DBSC focuses on making stolen session cookies useless if exfiltrated and used on another device. They are two distinct but synergistic layers of defense against session hijacking. An attacker bypassing ABE to get cookies might still find those cookies unusable elsewhere if they are DBSC-protected.
+
+
+
+
+
 
 
 
