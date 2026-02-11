@@ -70,29 +70,29 @@ In addition, you can explore other interfaces that are not exposed in the curren
 
 
 
-3.**Storage in `Local State`:**
+**Storage in `Local State`:**
 - The ciphertext BSTR received from `IElevator::EncryptData` is Base64-encoded.
 - The prefix APPB (ASCII: `0x41 0x50 0x50 0x42`) is prepended.
 - This final string is stored in Local State as `os_crypt.app_bound_encrypted_key`.
 
-4.**The IElevator COM Service (The Gatekeeper for Decryption):**
+**The IElevator COM Service (The Gatekeeper for Decryption):**
 When Chrome (or this project's injected DLL) needs the plaintext `app_bound_key`.
 It instantiates the IElevator COM object using browser-specific CLSIDs/IIDs:
 - Google Chrome: CLSID: `{708860E0-F641-4611-8895-7D867DD3675B}`, IID: `{463ABECF-410D-407F-8AF5-0DF35A005CC8}`
 - Microsoft MsEdge: CLSID: `{1FCBE96C-1697-43AF-9140-2897C7C69767}` , IID: `{C9C2B807-7731-4F34-81B7-44FF7779522B}`
 
-The APPB-prefixed, Base64-encoded string from Local State is decoded and the APPB prefix stripped. This resulting blob (the doubly DPAPI-wrapped key) is passed to IElevator::DecryptData.
+The APPB-prefixed, Base64-encoded string from **Local State** is decoded and the `APPB` prefix stripped. This resulting blob (the doubly DPAPI-wrapped key) is passed to `IElevator::DecryptData`.
 
-5.**Unwrapping and Path Validation by `IElevator::DecryptData`:**
-- System-Context DPAPI Decryption: The input blob is first decrypted using CryptUnprotectData under the SYSTEM DPAPI context. This removes the outer DPAPI layer.
+**Unwrapping and Path Validation by `IElevator::DecryptData`:**
+- **System-Context DPAPI Decryption:** The input blob is first decrypted using `CryptUnprotectData` under the **SYSTEM DPAPI context**. This removes the outer DPAPI layer.
 
-- User-Context DPAPI Decryption: The intermediate result is then decrypted using CryptUnprotectData under the calling user's DPAPI context (via ScopedClientImpersonation). This removes the inner DPAPI layer, yielding a plaintext blob.
+- **User-Context DPAPI Decryption:** The intermediate result is then decrypted using `CryptUnprotectData` under the calling **user's DPAPI** context (via ScopedClientImpersonation). This removes the inner DPAPI layer, yielding a plaintext blob.
 
 - Extraction of Validation Data and Plaintext Key: This plaintext blob is structured as `[validation_data_length] [validation_data][app_bound_key_length][app_bound_key]`. The service uses `PopFromStringFront` to extract the original validation_data and then the `app_bound_key`.
 
 
-6.Data Encryption/Decryption using the app_bound_key:
-Chrome's OSCrypt (or this project's DLL) then uses this recovered 32-byte AES key with AES-256-GCM to encrypt/decrypt actual user data (cookies, passwords), which are typically prefixed (e.g., v20).
+**Data Encryption/Decryption using the app_bound_key:**
+Chrome's OSCrypt then uses this recovered **32-byte AES** key with **AES-256-GCM** to **encrypt/decrypt** actual user data (`cookies`, `passwords`), **which are typically prefixed (e.g., v20).**
 
 
 
@@ -134,6 +134,10 @@ The PoC's description of needing to decrypt the app_bound_encrypted_key from Loc
 After these two DPAPI unwrap steps, the result would be the `[validation_data_length][validation_data][app_bound_key_length][app_bound_key]` plaintext. An admin tool could then simply parse this structure to extract the app_bound_key directly, without needing to perform path validation.
 The runassu PoC's claim that this result is "not the final app_bound_key" and requires a further AES-GCM decryption with a key hardcoded in elevation_service.exe is intriguing.
 This additional layer is not part of the standard `IElevator::DecryptData` flow for returning the app_bound_key to OSCrypt, as evidenced by elevator.cc. The plaintext_str returned by `IElevator::DecryptData` is the application-level key.
+
+<img width="874" height="1043" alt="image" src="https://github.com/user-attachments/assets/1c83b854-b16b-4c5c-98b1-c018c893990d" />
+
+
 
 The PoC's extra step might be attempting to decrypt data that has undergone an additional, internal transformation within Chrome, possibly related to the `PreProcessData/PostProcessData` functions seen in `elevator.cc` (conditionally compiled with `BUILDFLAG(GOOGLE_CHROME_BRANDING))`. These functions might apply another layer of encryption using a service-internal key for specific branded builds or key versions.
 Alternatively, the PoC might be targeting a different internal key or an older/variant ABE scheme.
