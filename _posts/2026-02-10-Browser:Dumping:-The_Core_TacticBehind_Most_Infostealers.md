@@ -155,188 +155,58 @@ Alternatively, the PoC might be targeting a different internal key or an older/v
 
 ----
 
-#### 5.2. Remote Debugging Port (--remote-debugging-port) and Its Mitigation
-Attackers had also turned to Chrome's remote debugging capabilities as a vector to exfiltrate cookies, effectively sidestepping ABE's file-based protections.
-
-Chrome's Countermeasure (Chrome 136+): As detailed in a Chrome Developers blog post, Google addressed this by changing the behavior of the --remote-debugging-port and --remote-debugging-pipe command-line switches. Starting with Chrome 136, these switches will no longer function when Chrome is launched with its default user data directory. To enable remote debugging, users must now also specify the --user-data-dir switch, pointing Chrome to a non-standard, separate data directory. This ensures that any debugging session operates on an isolated profile, using a different encryption key, thereby safeguarding the user's primary profile data.
-`chrome.exe --remote-debugging-port=9222 --headless --window-position=-3000,-3000`
-then get the cookies via Network.getAllCookies via chrome debugging protocol 
-
-Bypass Simplicity: While this change adds a hurdle, it's worth noting that an attacker can control Chrome's launch parameters (e.g., by modifying shortcuts or through malware that relaunches Chrome), they could potentially still launch Chrome with both --remote-debugging-port and a temporary --user-data-dir, then attempt to import or access data if Chrome allows such operations into a fresh, debuggable profile. The effectiveness of the debug port mitigation hinges on preventing unauthorized modification of launch parameters and on Chrome's policies regarding data access in such scenarios.
 
 
-بدون مشخص کردن --user-data-dir جداگانه → دیباگ کار نمی‌کند
-→ با --user-data-dir جداگانه → فقط پروفایل خالی/جدید باز می‌شود → کوکی اصلی شما آنجا نیست
-
-
-
-
-
-
-#### 5.3. Device Bound Session Credentials (DBSC)
+#### Device Bound Session Credentials (DBSC) 
 As an overlapping and complementary security effort, Google has been developing Device Bound Session Credentials (DBSC), available for Origin Trial in Chrome 135. DBSC aims to combat cookie theft by cryptographically binding session cookies to the device.
 
 Mechanism: When a DBSC session is initiated, the browser generates a public-private key pair, storing the private key securely (ideally using hardware like a TPM). The server associates the session with the public key. Periodically, the browser proves possession of the private key to refresh the (typically short-lived) session cookie.
 Relevance to ABE: While ABE protects data at rest on the user's device, DBSC focuses on making stolen session cookies useless if exfiltrated and used on another device. They are two distinct but synergistic layers of defense against session hijacking. An attacker bypassing ABE to get cookies might still find those cookies unusable elsewhere if they are DBSC-protected.
 
+[**DBSC is exclusively available in Google Chrome (starting with version 145), and not yet supported in Firefox, Safari, Edge, or other major browsers.**](https://chromestatus.com/feature/5140168270413824)
 
 
 
-
-
-
-
+---
 
 #### 6. Key Insights from Google's ABE Design Document & Chromium Source Code
 
+Insights from Google's design documents and the Chromium source code (`elevator.h` , `elevator.cc`, `caller_validation.h` , `caller_validation.cc` ) provide a comprehensive understanding:
 
+- **Security Approach Change:** Initial proposal required digital signature validation, but was descoped to path validation for simplicity, assessed as providing "equivalent protection against non-admin attackers"
 
-Insights from Google's design documents and the Chromium source code (elevator.h, elevator.cc, caller_validation.h, caller_validation.cc) provide a comprehensive understanding:
+- **OSCrypt Module Modifications:** Modified to use new IPC mechanisms to communicate with Elevation Service instead of making direct DPAPI calls
 
-Original Intent vs. Implemented Reality (Path vs. Signature Validation): The initial proposal (Page 4 of the design doc) contemplated validating the digital signature of both the calling process and the IElevator service executable. However, an "Update (2024)" note clarifies that the project was descoped to use path validation for the initial implementation, primarily for simplicity, with the assessment that it offered "equivalent protection against a non-admin attacker" for the prevailing threat models at the time.
+- **Key Encryption Delegates System:** OSCrypt iterates through a list of delegates - one for legacy DPAPI keys, another for ABE-protected keys via IPC
 
-OSCrypt Module Modifications: The core components/os_crypt module within Chromium was slated to be augmented. Instead of making direct DPAPI calls, it would use new IPC mechanisms to communicate with the Elevation Service (Pages 2, 5). 
+- **Stateless Service Design:** IElevator service functions as a largely stateless encrypt/decrypt primitive with no persistent storage required for ABE operations
 
-The design proposed that OSCrypt would iterate through a list of "key encryption delegates" - one for legacy DPAPI keys, another for ABE-protected keys via IPC - to find a delegate capable of decrypting a given key (Page 6).
-
-Stateless Nature of the Service: The IElevator service, in its role for ABE, is designed as a largely stateless encrypt/decrypt primitive. It doesn't require its own persistent storage for ABE operations (Page 4).
-
-Explicit Acknowledgment of Injection as a Bypass: Page 7 ("Weaknesses") of the design document candidly states: "An attacker could inject code into Chrome browser and call the IPC interface. It would be hard to defeat a determined attacker using this technique..." This project serves as a practical validation of this assessment.
-
-Understanding the IElevator COM Interface and its Definition:
-The IElevator interface is a standard Windows COM (Component Object Model) interface. Such interfaces define a contract between a service provider (like Chrome's Elevation Service) and a client (like Chrome's OSCrypt module, or in this project's case, the injected chrome_decrypt.dll).
-
-This contract is formally specified using MIDL (Microsoft Interface Definition Language). An .idl file written in MIDL describes the methods, parameters, and data types. The MIDL compiler processes this .idl file to generate C/C++ header files (defining the interface structure for compilers) and a type library (.tlb) that describes the interface's binary layout. It also generates proxy/stub code that enables COM to transparently manage communication between the client and server, even if they are in different processes.
-
-While this project's chrome_decrypt.dll contains a C++ stub for IElevator (using the MIDL_INTERFACE macro), this serves as a compile-time declaration of the interface's shape. The crucial elements for runtime interaction are the correct CLSID (to identify the COM component) and IID (to request the specific IElevator interface pointer) passed to CoCreateInstance.
-
-The IElevator interface, as potentially defined by Chrome, would include methods like EncryptData and DecryptData. An illustrative C++ stub, similar to what's in chrome_decrypt.cpp, is:
-```c
-// Illustrative C++ MIDL_INTERFACE definition stub from chrome_decrypt.cpp
-MIDL_INTERFACE("A949CB4E-C4F9-44C4-B213-6BF8AA9AC69C") 
-IElevator : public IUnknown
-{
-public:
-    // Method for Chrome's recovery mechanisms, not directly used for decryption by this tool.
-    virtual HRESULT STDMETHODCALLTYPE RunRecoveryCRXElevated(
-        const WCHAR *crx_path, const WCHAR *browser_appid, /* ...other params... */) = 0; 
-    
-    // Method used by Chrome to initially encrypt the app_bound_key.
-    virtual HRESULT STDMETHODCALLTYPE EncryptData(
-        ProtectionLevel protection_level, // Specifies the type of protection to apply
-        const BSTR plaintext,
-        BSTR *ciphertext,
-        DWORD *last_error) = 0;
-    
-    // The key method utilized by this tool to decrypt the app_bound_key.
-    virtual HRESULT STDMETHODCALLTYPE DecryptData(
-        const BSTR ciphertext, // DPAPI-wrapped app_bound_key blob from Local State
-        BSTR *plaintext,      // Output: raw 32-byte app_bound_key
-        DWORD *last_error) = 0; // Propagates underlying errors (e.g., from DPAPI)
-};
-```
-
-The EncryptData method, though not called by this decryption tool, would likely use an enum like ProtectionLevel to dictate the security measures applied during the encryption of the app_bound_key. This project includes such an enum in chrome_decrypt.cpp:
-```c
-// From elevation_service_idl.h (implicitly, via project's chrome_decrypt.cpp stub)
-enum class ProtectionLevel // As used by IElevator
-{
-    PROTECTION_NONE = 0,
-    PROTECTION_PATH_VALIDATION_OLD = 1, // An older path validation scheme
-    PROTECTION_PATH_VALIDATION = 2,    // The ABE path validation relevant to this research
-    PROTECTION_MAX = 3                 // Boundary for valid levels
-};
-```
-By specifying ProtectionLevel::PROTECTION_PATH_VALIDATION during the EncryptData call, Chrome instructs the IElevator service to enforce the path validation check when creating the app_bound_encrypted_key. The DecryptData method, subsequently used by this tool, implicitly respects the protection level that was originally applied during encryption.
-The IElevator::EncryptData method, when called by Chrome with ProtectionLevel::PROTECTION_PATH_VALIDATION, generates caller-specific validation_data (based on the normalized path of Chrome itself), prepends this to the actual app_bound_key, and then encrypts this combined payload twice with DPAPI (first user-context, then system-context).
-The IElevator::DecryptData method reverses this: decrypts twice with DPAPI (first system-context, then user-context), extracts the validation_data and the app_bound_key, performs path validation using the extracted validation_data against the current caller, and returns the app_bound_key if valid. This project's tool correctly utilizes this returned key.
-Path Normalization (MaybeTrimProcessPath in caller_validation.cc): A critical detail for ProtectionLevel::PROTECTION_PATH_VALIDATION is that the validation does not use the raw executable path. Instead, MaybeTrimProcessPath normalizes it by:
-Removing the executable filename (e.g., chrome.exe).
-Conditionally removing trailing directory components if they match "Temp", "Application", or a version string (e.g., 127.0.0.0).
-Standardizing Program Files (x86) to Program Files. This ensures that different Chrome versions or temporary unpack locations within the same sanctioned base installation directory can still validate successfully.
+- **Acknowledged Injection Vulnerability:** Design document explicitly admits "an attacker could inject code into Chrome browser and call the IPC interface" - defeating a determined attacker using this technique would be hard
 
 
 
-
-
-
-#### Browser Process Termination (KillBrowserProcesses)
-
-
-
-
-
-Rationale: This is primarily to ensure that SQLite database files (Cookies, Login Data, Web Data) are not locked by live browser instances and that the IElevator COM server can initialize in a clean state, potentially avoiding conflicts or issues if existing browser instances have the service in an unusual state.
-User Impact: This is a disruptive action. Future enhancements to this tool could explore less intrusive methods, such as attempting to copy the database files to a temporary location and operating on those copies, or implementing a more conditional termination strategy (e.g., only if initial COM instantiation or DB access fails).
-
-7.2. Multi-Profile Support
-Currently, this tool primarily targets the Default user profile within the browser's user data directory. Comprehensive support for environments with multiple Chrome profiles would involve:
-
-Enumerating all active profile directories (e.g., Profile 1, Profile 2, etc.) within the main User Data folder.
-Applying the (likely single, shared per User Data instance) app_bound_key to decrypt data from each profile's respective SQLite databases, as the key is tied to the overall user data directory, not individual sub-profiles.
-
-7.3. Roaming Profiles and Enterprise Environments Google's public communications on ABE explicitly state that it "will not function correctly in environments where Chrome profiles roam between multiple machines." This is because the underlying DPAPI protection for the app_bound_key is inherently machine-bound (and user-bound). If an enterprise requires support for roaming profiles, they are encouraged to follow existing best practices. For scenarios where ABE might cause incompatibility, Chrome provides the ApplicationBoundEncryptionEnabled enterprise policy to configure or disable this feature.
-
-Computer Configuration
- └ Administrative Templates
-   └ Google
-     └ Google Chrome
-
-
-#### 8. Conclusion and Future Directions for ABE Research
-App-Bound Encryption marks a commendable and significant enhancement in securing locally stored Chrome data on the Windows platform. By fundamentally tying decryption capabilities to a path-validated COM service, Google has effectively "moved the goalposts" for attackers, compelling them to resort to either privilege escalation or code injection into Chrome itself - both of which are generally "noisier" and more readily detectable actions than straightforward, unprivileged DPAPI calls.
-
-This project, through its implementation of a user-mode DLL injection technique, serves multiple purposes:
-
-It provides a practical, working demonstration of the bypass vector that Google's own design documents acknowledged.
-It functions as a valuable tool for legitimate data recovery scenarios and for security researchers aiming to understand ABE's intricacies.
-It stands as a reference implementation for interacting with the ABE system from within the trusted browser context.
-The ongoing evolution of Chrome and its security mechanisms means that ABE research will remain a dynamic field. Future areas of focus will likely include:
-
-Monitoring the IElevator service: Tracking any changes to its CLSIDs, IIDs, interface methods, or the core validation logic (e.g., a potential future shift from path validation to digital signature validation, as originally contemplated).
-Deep Analysis of Undocumented Structures: Further reverse engineering efforts to understand elements like the 32-byte prefix observed in decrypted cookie plaintext.
-
-Chrome's Detection and Mitigation of Injection Techniques: As Google and security vendors work to make code injection "more detectable," understanding these evolving detection strategies and their impact will be crucial.
-Impact of Further OS-Level Hardening: Investigating how improvements in Windows process integrity, application isolation primitives, or EDR technologies might affect ABE and bypass techniques.
-The landscape of browser security is one of constant flux. App-Bound Encryption is a critical new defensive layer, and the continued efforts of the research community will be essential for a comprehensive understanding of its strengths, its limitations, and its trajectory in the face of ever-adapting threats.
-
-
-
-
-
-
-
+---
 
 #### 9. References and Further Reading
-- the main one [xaitax](https://github.com/xaitax/Chrome-App-Bound-Encryption-Decryption/blob/main/docs/RESEARCH.md )
+- **the main one** [xaitax](https://github.com/xaitax/Chrome-App-Bound-Encryption-Decryption/blob/main/docs/RESEARCH.md )
+
+- [Maldev-Academy ](https://github.com/Maldev-Academy/DumpBrowserSecrets)
 
 
-Google Security Blog: Improving the security of Chrome cookies on Windows (July 30, 2024)
-https://security.googleblog.com/2024/07/improving-security-of-chrome-cookies-on.html
+- [Google Security Blog: Improving the security of Chrome cookies on Windows (July 30, 2024)
+](https://security.googleblog.com/2024/07/improving-security-of-chrome-cookies-on.html)
 
-Google Design Document: Chrome app-bound encryption Service (formerly: Chrome Elevated Data Service) (Original: Jan 25, 2021, with later updates)
-https://drive.google.com/file/d/1xMXmA0UJifXoTHjHWtVir2rb94OsxXAI/view
+- [Google Design Document: Chrome app-bound encryption Service (formerly: Chrome Elevated Data Service) (Original: Jan 25, 2021, with later updates)](https://drive.google.com/file/d/1xMXmA0UJifXoTHjHWtVir2rb94OsxXAI/view)
 
-
-Chrome Developers Blog (Remote Debugging): Changes to remote debugging switches to improve security (Example: March 17, 2025)
-https://developer.chrome.com/blog/remote-debugging-port
+- [Chrome Developers Blog (DBSC): Origin trial: Device Bound Session Credentials in Chrome](https://developer.chrome.com/blog/dbsc-origin-trial)
 
 
-Chrome Developers Blog (DBSC): Origin trial: Device Bound Session Credentials in Chrome
-https://developer.chrome.com/blog/dbsc-origin-trial
+- [runassu's PoC (Admin-level decryption): chrome_v20_decryption](https://github.com/runassu/chrome_v20_decryption)
+
+- [SilentDev33's ChromeAppBound-key-injection ](https://github.com/SilentDev33/ChromeAppBound-key-injection)
 
 
-runassu's PoC (Admin-level decryption): chrome_v20_decryption
-https://github.com/runassu/chrome_v20_decryption
 
-
-Related Research/Tools:
-snovvcrash's X/Twitter Profile (Security Researcher)
-SilentDev33's ChromeAppBound-key-injection (Similar PoC)
-https://x.com/snovvcrash
-
-
-https://github.com/SilentDev33/ChromeAppBound-key-injection
 
 
 
