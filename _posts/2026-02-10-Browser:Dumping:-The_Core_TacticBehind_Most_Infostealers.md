@@ -101,7 +101,7 @@ Chrome's OSCrypt then uses this recovered **32-byte AES** key with **AES-256-GCM
 **Local State and the app_bound_encrypted_key**
 _Typical Location_: `%LOCALAPPDATA%\<BrowserVendor>\<BrowserName>\User Data\Local State`
 _Relevant JSON Key_: `os_crypt.app_bound_encrypted_key`.
-_Format A string value_: ` "APPB<Base64EncodedSystemDPAPIWrappedUserDPAPIWrappedValidationDataAndKey>"`.
+_Format A string value_: `APPB<Base64EncodedSystemDPAPIWrappedUserDPAPIWrappedValidationDataAndKey>`.
 
 **Data items encrypted with the app_bound_key generally adhere to a consistent format:**
 **Prefix**: A version or type prefix string. For `cookies`, `passwords`, and `payment data` observed thus far, this is typically **v20** `(ASCII: 0x76 0x32 0x30)` . Older data encrypted solely with DPAPI might use **prefixes** like `v10` or `v11`.
@@ -116,16 +116,18 @@ _Format A string value_: ` "APPB<Base64EncodedSystemDPAPIWrappedUserDPAPIWrapped
 **Cookie Value Specifics (from encrypted_value in Cookies DB)**
 A notable observation during the development of this tool is that after successfully decrypting a v20-prefixed cookie blob using AES-GCM with the app_bound_key, the first 32 bytes of the resulting plaintext appear to be some form of metadata or padding. The actual cookie value string begins after this DECRYPTED_COOKIE_VALUE_OFFSET of 32 bytes.
 
+**The value of the cookie starts after the first 32 bytes (Thanks to luci4_vx::https://luci4.net) ** -> _after Decryption_ go forward in 32 bytes.
+
+
 **Passwords (from password_value in Login Data DB) & Payment Information**
 These data types also use `v20-prefixed` blobs.
 Unlike cookies, the entire decrypted plaintext (after accounting for the v20 prefix, IV, and tag during the AES-GCM decryption process) is generally considered to be the sensitive value itself (e.g., the password string, credit card number, or CVC).
--------
------
+
 ---
 
-### Alternative Decryption Vectors & Chrome's Evolving Defenses
+### **4. Alternative Decryption Vectors & Chrome's Evolving Defenses1**
 
-#### 5.1. Administrator-Level Decryption (e.g., runassu/chrome_v20_decryption PoC)
+#### Administrator-Level Decryption (e.g., `runassu/chrome_v20_decryption` PoC)
 The proof-of-concept by runassu illustrates that if an attacker possesses Administrator privileges, the app_bound_key can potentially be decrypted. This aligns with ABE's stated non-goal of protecting against higher-privilege attackers.
 [REPO](https://github.com/runassu/chrome_v20_decryption?tab=readme-ov-file)
 
