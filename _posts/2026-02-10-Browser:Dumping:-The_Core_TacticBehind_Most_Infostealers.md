@@ -21,11 +21,11 @@ To counter this, Google introduced App-Bound Encryption (ABE) in Chrome (publicl
 **Initial Identity Verification Method**: The first iteration relies on path validation of the calling executable. While digital signature validation was considered, path validation was chosen for the initial rollout to "descope the complexity" (as noted in a 2024 update to Google's design document), deemed sufficient against the immediate threat model.
 
 Google's conceptual diagram provides a clear overview:
-<img width="968" height="619" alt="image" src="https://github.com/user-attachments/assets/5d463de7-eb8f-4f74-9783-afd98711e3dc" />
+<img width="957" height="611" alt="image" src="https://github.com/user-attachments/assets/e0ef5d36-4fcf-4b0e-9d5d-9cfefd8e1520" />
 
+---
 
-
-##### 2. The ABE Mechanism: A Step-by-Step Breakdown
+#### 2. The ABE Mechanism: A Step-by-Step Breakdown
 ABE employs a multi-layered strategy for key management and data encryption:
 
 1.**The app_bound_key (Session Key):**
