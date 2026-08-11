@@ -2,8 +2,8 @@
 
 <img src="https://github.com/user-attachments/assets/646eeef0-1423-4677-baee-3ce4c10439c5" 
      alt="image" 
-     style="width: 300px; height: auto; display: block;" />
-
+     style="width: 100%; max-width: 600px; height: auto; display: block;" />
+     
 **Tags:** Memory Forensics · Volatility 3 · WinPmem · ntlm hash
 
 ---
