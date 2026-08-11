@@ -1,5 +1,7 @@
 # The Growing Importance of Windows Credential Theft
 
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/646eeef0-1423-4677-baee-3ce4c10439c5" />
+
 **Tags:** Memory Forensics · Volatility 3 · WinPmem · ntlm hash
 
 ---
