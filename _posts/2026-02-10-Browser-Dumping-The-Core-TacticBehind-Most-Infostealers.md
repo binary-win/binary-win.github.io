@@ -180,7 +180,7 @@ plaintext. An admin tool could then simply parse this structure to extract the a
 The runassu PoC's claim that this result is "**not the final app_bound_key**" and requires a further **AES-GCM decryption with a key hardcoded in elevation_service.exe is intriguing**.
 This additional layer is not part of the standard `IElevator::DecryptData` flow for returning the app_bound_key to OSCrypt, as evidenced by elevator.cc. The plaintext_str returned by `IElevator::DecryptData` is the application-level key.
 
-<img width="817" height="250" alt="image" src="/images/29.png" />
+<img alt="image" src="/images/29.png" />
 
 
 The PoC's extra step might be attempting to decrypt data that has undergone an additional, internal transformation within Chrome, possibly related to the `PreProcessData/PostProcessData` functions seen in `elevator.cc` (conditionally compiled with `BUILDFLAG(GOOGLE_CHROME_BRANDING))`. These functions might apply another layer of encryption using a service-internal key for specific branded builds or key versions.
