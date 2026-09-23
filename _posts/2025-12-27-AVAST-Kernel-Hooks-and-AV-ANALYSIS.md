@@ -121,7 +121,8 @@ The Avast driver pointer is overwritten with the original GetCpuClock function p
 Further analysis reveals the following implementations. The first image demonstrates a pattern-based search used to resolve the address of HalpPerformanceCounter. The second image shows the primary logic, where GetCpuLock is set to 1 and the call to
 `HalpPerformanceCounter.FunctionTable.QueryCounter(internal_data)` is overridden.
 
-<img width="424" height="429" alt="image" src="https://github.com/user-attachments/assets/77d18d52-48a7-4df2-a165-2cfd3aa7e2db" />
+<img width="808" height="178" alt="Screenshot 2025-12-28 231501" src="https://github.com/user-attachments/assets/3541760b-3264-45f6-b167-23bbc46deff7" />
+
 
 
 ---
@@ -166,6 +167,11 @@ it checks if the name matches Avast's own binaries like avgsvc.exe, avgui.exe, a
 depending on which name matches, it assigns a category number and sets specific protection flags in the hash table record.
 Avast's own processes get the **strictest** rules, core system processes like lsass or csrss get strong **anti-tamper** protection, Defender gets special handling, system utilities get medium lockdown and so on. all these flags are then written back into the hash table entry so the driver knows exactly how sensitive the process is and how aggressively it should defend it later.
 in short, this function classifies every process by its filename and assigns custom kernel-level protection rules based on what it is – Avast's own stuff gets maximum lockdown, lsass/csrss get anti-tamper rules, Defender gets special care, and so on. it's a very deliberate and thorough self-protection mechanism.
+
+<img width="516" height="184" alt="Screenshot 2025-12-29 001951" src="https://github.com/user-attachments/assets/cdcfab3f-ee9b-459d-81cb-57ea16e5a173" />
+
+
+<img width="799" height="463" alt="Screenshot 2025-12-29 003959" src="https://github.com/user-attachments/assets/c68193ae-3c77-493b-a74f-195c64646054" />
 
 
 Additionally, I extracted Unicode strings from the aswVmm driver using
