@@ -1,0 +1,112 @@
+theme: jekyll-theme-chirpy
+
+baseurl: ""
+lang: en
+timezone: Europe/Moscow
+
+title: binary-win
+tagline: Offensive Security Researcher
+
+description: >-
+  Technical blog covering Windows internals, exploitation,
+  and security research.
+
+url: "https://binary-win.github.io"
+
+github:
+  username: binary-win
+
+social:
+  name: binary-win
+  email: # your email
+  links:
+    - https://github.com/binary-win
+
+theme_mode:   # leave empty = system default (light/dark toggle)
+
+avatar: /assets/avatar.jpg   # path to a profile image, e.g. /assets/img/avatar.jpg
+
+toc: true
+
+comments:
+  provider:   # leave blank to disable comments
+
+pwa:
+  enabled: true
+
+paginate: 10
+
+kramdown:
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: highlight
+    span:
+      line_numbers: false
+    block:
+      line_numbers: true
+      start_line: 1
+
+collections:
+  tabs:
+    output: true
+    sort_by: order
+
+defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
+      comments: true
+      toc: true
+      permalink: /posts/:title/
+  - scope:
+      path: _drafts
+    values:
+      comments: false
+  - scope:
+      path: ""
+      type: tabs
+    values:
+      layout: page
+      permalink: /:title/
+  - scope:
+      path: assets/img/favicons/
+    values:
+      swcache: true
+  - scope:
+      path: assets/js/dist
+    values:
+      swcache: true
+
+sass:
+  style: compressed
+
+compress_html:
+  clippings: all
+  comments: all
+  endings: all
+  profile: false
+  blanklines: false
+  ignore:
+    envs: [development]
+
+exclude:
+  - "*.gem"
+  - "*.gemspec"
+  - tools
+  - README.md
+  - CHANGELOG.md
+  - LICENSE
+  - rollup.config.js
+  - node_modules
+  - package*.json
+
+jekyll-archives:
+  enabled: [categories, tags]
+  layouts:
+    category: category
+    tag: tag
+  permalinks:
+    tag: /tags/:name/
+    category: /categories/:name/
