@@ -114,6 +114,7 @@ and the last part which is that a list of process that providing the logs (a lis
 
 My first instinct was to search for the provider GUID directly in the Sysmon binary a quick and dirty string search. That came up empty. So I opened sysmon.exe in IDA and started reversing.
 Eventually I found the function responsible for setting up the DNS trace session:
+
 ```
   if ( a1 )
   {
@@ -134,14 +135,19 @@ Eventually I found the function responsible for setting up the DNS trace session
   }
   started = ControlTraceW(TraceHandle, L"SysmonDnsEtwSession", (PEVENT_TRACE_PROPERTIES)v3, 1u);
 ```
+
 and the GUID was there: 
 ```
 const GUID ProviderId:
 GUID <1C95126Eh, 7EEAh, 49A9h, <0A3h, 0FEh, 0A3h, 78h, 0B0h, 3Dh,0DBh, 4Dh>>
 ```
+
 Which expands to `{1C95126E-7EEA-49A9-A3FE-A378B03DDB4D}` exactly the Microsoft-Windows-DNS-Client provider GUID we saw earlier. Confirmed: Sysmon calls `StartTraceW` to create the `SysmonDnsEtwSession` ETW session, then uses EnableTraceEx2 to subscribe to DNS events from that provider.
 
+----
+
 - **Triggering Event ID 22 — a Minimal Test Case**
+
 ```
 #include <windows.h>
 #include <windns.h>
@@ -153,7 +159,7 @@ int main(void) {
     PDNS_RECORD results = nullptr;
 
     DNS_STATUS status = DnsQuery_A(
-        "blog.xpnsec.com",
+        "binary-win.github.io",
         DNS_TYPE_A,
         DNS_QUERY_STANDARD,
         nullptr,
@@ -182,7 +188,7 @@ Event ID 22 is the one we care about. The question now is: what happens between 
 
 ![First Image](/images/dns-no-patch.png)
 
-
+----
 
 ### Silencing Sysmon's DNS Logging — Patching the ETW Emit Path
 Since DnsQuery_A is exported from dnsapi.lib, I opened the DLL in IDA alongside WinDbg to hunt for the provider GUID we identified earlier — {1C95126E-7EEA-49A9-A3FE-A378B03DDB4D}.
@@ -195,7 +201,7 @@ The GUID was there, referenced by a symbol named DNS_CLIENT — consistent with 
 
 ![First Image](/images/McGenEventRegister_EtwEventRegister.png)
 
-
+----
 
 ##### Tracing the Emit Path
 From there I traced where the actual event write happens. The callback chain bottoms out at EtwEventWriteTransfer, with the full callstack looking like this:
@@ -216,40 +222,43 @@ DNSAPI!Query_PrivateExW+0x27ae1
 DNSAPI!Query_Shim+0xbd
 DNSAPI!DnsQuery_A+0x29
 ```
-The structure is the same but the intermediate functions have changed — McTemplateU0zqxqz is gone, replaced by DnsEtwTraceQueryExStart. Microsoft refactored the internals but the ETW emit mechanism is identical.
-
+The structure is the same but the intermediate functions have changed , `McTemplateU0zqxqz` is gone, replaced by `DnsEtwTraceQueryExStart`. Microsoft refactored the internals but the ETW emit mechanism is identical.
 
 ![First Image](/images/etwwritetransfer.png)
 
+With the callstack mapped out, the target was clear: `DnsEtwTraceQueryExStart`, the function that leads to `EtwEventWriteTransfer`. I patched it with a C3 (ret) and sent a DNS query. **Sysmon still logged it.**
 
-
-With the callstack mapped out, the target was clear: DnsEtwTraceQueryExStart — the function that leads to EtwEventWriteTransfer. I patched it with a C3 (ret) and sent a DNS query. Sysmon still logged it.
-
-So there's at least one more emit site. Going back to IDA and checking all xrefs of McGenEventWrite_EtwEventWriteTransfer, a second call site showed up: DnsEtwTraceQueryExComplete. The naming makes sense in hindsight — one function fires at the start of the query, the other at completion. Both independently emit ETW events. Patched that one with C3 too. Still logged.
+So there's at least one more emit site. Going back to WinDbg and stepping through instruction by instruction, then cross-referencing in IDA, a second call site showed up: `DnsEtwTraceQueryExComplete`. The naming makes sense in hindsight, one function fires at the start of the query, the other at completion. Both independently emit ETW events.
 
 ![First Image](/images/mc.png)
 
-
+------
 
 - **First Patch Attempt — Naive ret**
-The obvious first move was to patch DnsEtwTraceQueryExStart with a C3 (ret) and see if that killed the log. It didn't. Digging further revealed a second emit site: DnsEtwTraceQueryExComplete, which is the other place McGenEventWrite_EtwEventWriteTransfer gets called — covering the query completion path.
+The obvious first move was to patch both `DnsEtwTraceQueryExStart` and `DnsEtwTraceQueryExComplete` with C3 (ret) at their entry points. Sent the query. Still logged.
 
-Patched both with C3. Still logged.
+A bare ret at the function entry isn't enough the emit decision is gated by conditional jumps inside each function, so patching the prologue doesn't prevent EtwEventWriteTransfer from being reached on a different code path.
+
 
 - **Second Attempt — Patching the Conditional Jumps**
-Returning to WinDbg, this time I watched the actual execution flow carefully with Sysmon absent — to identify which branch is taken when ETW logging is effectively inactive. That gave me the specific conditional jumps (JE) inside both functions that gate the EtwEventWriteTransfer call.
+Back in WinDbg, this time with Sysmon absent, I stepped through both functions and watched which branch gets taken when no ETW session is listening, that's the natural no-emit path. That gave me the exact `JE` instructions inside both `DnsEtwTraceQueryExStart` and `DnsEtwTraceQueryExComplete` that gate the write.
 
-The fix was straightforward: change those JE instructions to unconditional JMP, forcing execution to always take the non-logging branch regardless of whether a session is listening.
+The fix: flip those `JE` instructions to unconditional `JMP`, forcing execution to always take the no-emit branch regardless of whether a session is listening.
 
-After both patches — no Event ID 22 generated.
+**Sent the query.
+No Event ID 22. No log generated**
 
 
 
 
+
+
+
+---
+#### What This Tells Us
 The ETW emit decision lives entirely inside dnsapi.dll, not in Sysmon. Sysmon just consumes what the provider emits. Patch the provider's emit path at the right conditional branch, and Sysmon never sees the event — there's nothing for it to log.
 
 
-Finally, there is no log generated. :D
 
 
 
