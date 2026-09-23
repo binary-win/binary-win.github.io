@@ -1,3 +1,5 @@
+![First Image](/images/sysmon-break.png)
+
 Back in 2019, [XPN published Evading Sysmon DNS Monitoring](https://blog.xpnsec.com/evading-sysmon-dns-monitoring/), documenting an interesting look into how Sysmon collected DNS telemetry through ETW. The research was performed against Sysmon 10.1 and demonstrated that DNS visibility could ultimately be traced back to the Windows DNS Client ETW provider.
 
 Seven years later, I wanted to revisit the same telemetry path on a modern Windows environment.
@@ -250,7 +252,6 @@ No Event ID 22. No log generated**
 
 
 
-https://youtu.be/M9hlJ-yEJBk
 
 {% include embed/youtube.html id="M9hlJ-yEJBk" %}
 
