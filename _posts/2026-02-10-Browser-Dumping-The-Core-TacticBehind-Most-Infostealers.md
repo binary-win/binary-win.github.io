@@ -191,7 +191,7 @@ Alternatively, the PoC might be targeting a different internal key or an older/v
 **Stability Concerns**: Relying on such internal administrator-level method, undocumented layers and hardcoded keys is highly unstable and prone to **break with Chrome updates**.
 For the source code see [HardCoded KEYs](https://github.com/bitwarden/clients/blob/main/apps/desktop/desktop_native/bitwarden_chromium_import_helper/src/windows/crypto.rs)
 
-<img width="817" height="250" alt="image" src="/images/28.png" />
+<img alt="image" src="/images/28.png" />
 
 <img width="817" height="250" alt="image" src="/images/chrome-dec.jpg" />
 
