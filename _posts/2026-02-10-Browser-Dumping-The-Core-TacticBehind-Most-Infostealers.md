@@ -180,8 +180,7 @@ plaintext. An admin tool could then simply parse this structure to extract the a
 The runassu PoC's claim that this result is "**not the final app_bound_key**" and requires a further **AES-GCM decryption with a key hardcoded in elevation_service.exe is intriguing**.
 This additional layer is not part of the standard `IElevator::DecryptData` flow for returning the app_bound_key to OSCrypt, as evidenced by elevator.cc. The plaintext_str returned by `IElevator::DecryptData` is the application-level key.
 
-<img width="803" height="363" alt="Screenshot 2026-02-11 054524" src="https://github.com/user-attachments/assets/2e52b39a-d572-4499-9342-3c057f973d96" />
-
+<img width="817" height="250" alt="image" src="/images/29.jpg" />
 
 
 The PoC's extra step might be attempting to decrypt data that has undergone an additional, internal transformation within Chrome, possibly related to the `PreProcessData/PostProcessData` functions seen in `elevator.cc` (conditionally compiled with `BUILDFLAG(GOOGLE_CHROME_BRANDING))`. These functions might apply another layer of encryption using a service-internal key for specific branded builds or key versions.
@@ -192,11 +191,9 @@ Alternatively, the PoC might be targeting a different internal key or an older/v
 **Stability Concerns**: Relying on such internal administrator-level method, undocumented layers and hardcoded keys is highly unstable and prone to **break with Chrome updates**.
 For the source code see [HardCoded KEYs](https://github.com/bitwarden/clients/blob/main/apps/desktop/desktop_native/bitwarden_chromium_import_helper/src/windows/crypto.rs)
 
+<img width="817" height="250" alt="image" src="/images/28.jpg" />
 
-<img width="971" height="748" alt="Screenshot 2026-02-11 054357" src="https://github.com/user-attachments/assets/e1dc0588-d4b9-4627-8d62-3701c9747507" />
-
-
-<img width="817" height="250" alt="image" src="https://github.com/user-attachments/assets/5e9d4414-9eff-4aad-8450-24acf1a9def6" />
+<img width="817" height="250" alt="image" src="/images/chrome-dec.jpg" />
 
 
 ----
