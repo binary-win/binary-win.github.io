@@ -110,86 +110,133 @@ Value               Level                Description
 0x03                win:Warning          Warning
 0x04                win:Informational    Information
 ```
+and the last part which is that a list of process that providing the logs (a list of processes that have imported dnsapi.dll)
 
-
-
-
-
-some malwares use dns based c2 and as a good way to log process dns queries sysmon and its can help defenders a lot so How  
-sysmon rules fires based on etw we can check it via logman -ets and check out for sysmon providers (consumer?) and we will see that there see
-
-PS C:\Users\Administrator> logman.exe -ets
-
-EventLog-Microsoft-Windows-Sysmon-Operational
-SYSMON TRACE                               
-SysmonDnsEtwSession             
-
-make long story short  
-today we take time on SysmonDnsEtwSession which is we ll findout that it consume the SysmonDnsEtwSession 
-we can find out the name and the guid of that :
+My first instinct was to search for the provider GUID directly in the Sysmon binary a quick and dirty string search. That came up empty. So I opened sysmon.exe in IDA and started reversing.
+Eventually I found the function responsible for setting up the DNS trace session:
 ```
- # logman SysmonDnsEtwSession -ets
-
-Name:                 SysmonDnsEtwSession
-Status:               Running
-Root Path:            %systemdrive%\PerfLogs\Admin
-Name:                 SysmonDnsEtwSession\SysmonDnsEtwSession
-Type:                 Trace
-File Mode:            Real-time
-...
-Provider:
-Name:                 Microsoft-Windows-DNS-Client
-Provider Guid:        {1C95126E-7EEA-49A9-A3FE-A378B03DDB4D}
+  if ( a1 )
+  {
+    started = StartTraceW(&TraceHandle, L"SysmonDnsEtwSession", (PEVENT_TRACE_PROPERTIES)v3);
+    if ( !started )
+    {
+      started = EnableTraceEx2(TraceHandle, &ProviderId, 1u, 4u, 0, 0, 0, 0);
+      sub_493E9A(0, 0, (LPCWSTR)sub_456430, 0, 0, (int)&v10);
+      if ( !started )
+        goto LABEL_16;
+    }
+    if ( !TraceHandle )
+    {
+      ControlTraceW(0, L"SysmonDnsEtwSession", (PEVENT_TRACE_PROPERTIES)v3, 1u);
+      goto LABEL_15;
+    }
+    EnableTraceEx2(TraceHandle, &ProviderId, 0, 4u, 0, 0, 0, 0);
+  }
+  started = ControlTraceW(TraceHandle, L"SysmonDnsEtwSession", (PEVENT_TRACE_PROPERTIES)v3, 1u);
 ```
-with the provider name we can query check it out 
-
-logman query providers "Microsoft-Windows-DNS-Client"
-it gives us 3 part information provider and its guid the keyword which used for and its value the level and the process 
+and the GUID was there: 
 ```
- # logman query providers "Microsoft-Windows-DNS-Client"
-
-Provider                                 GUID
--------------------------------------------------------------------------------
-Microsoft-Windows-DNS-Client             {1C95126E-7EEA-49A9-A3FE-A378B03DDB4D}
-
-Value               Keyword              Description
--------------------------------------------------------------------------------
-0x0000000000000100  ut:GenericEvent
-0x0000000010000000  ut:DnsAutoLogKeyword
-0x0000000020000000  ut:PolicyTable
-0x0000000040000000  ut:PerfCheckPoints
-0x0000000080000000  ut:RegistrationEvent
-0x0000000100000000  ut:SendPath
-0x0000000200000000  ut:ReceivePath
-0x0000000400000000  ut:L3ConnectPath
-0x0000000800000000  ut:L2ConnectPath
-0x0000001000000000  ut:ClosePath
-0x0000002000000000  ut:Authentication
-0x0000004000000000  ut:Configuration
-0x0000008000000000  ut:Global
-0x0000010000000000  ut:Dropped
-0x0000020000000000  ut:PiiPresent
-0x0000040000000000  ut:Packet
-0x0000080000000000  ut:Address
-0x0000100000000000  ut:StdTemplateHint
-0x8000000000000000  Microsoft-Windows-DNS-Client/Operational Microsoft-Windows-DNS Client Events/Operational
-0x4000000000000000  System               System
-
-Value               Level                Description
--------------------------------------------------------------------------------
-0x02                win:Error            Error
-0x03                win:Warning          Warning
-0x04                win:Informational    Information
-
-PID                 Image
--------------------------------------------------------------------------------
- #
+const GUID ProviderId:
+GUID <1C95126Eh, 7EEAh, 49A9h, <0A3h, 0FEh, 0A3h, 78h, 0B0h, 3Dh,0DBh, 4Dh>>
 ```
-all can get from a single provider 
+Which expands to `{1C95126E-7EEA-49A9-A3FE-A378B03DDB4D}` exactly the Microsoft-Windows-DNS-Client provider GUID we saw earlier. Confirmed: Sysmon calls `StartTraceW` to create the `SysmonDnsEtwSession` ETW session, then uses EnableTraceEx2 to subscribe to DNS events from that provider.
+
+- **Triggering Event ID 22 — a Minimal Test Case**
+```
+#include <windows.h>
+#include <windns.h>
+#include <stdio.h>
+
+#pragma comment(lib, "dnsapi.lib")
+
+int main(void) {
+    PDNS_RECORD results = nullptr;
+
+    DNS_STATUS status = DnsQuery_A(
+        "blog.xpnsec.com",
+        DNS_TYPE_A,
+        DNS_QUERY_STANDARD,
+        nullptr,
+        &results,
+        nullptr);
+
+    if (status != ERROR_SUCCESS) {
+        printf("DnsQuery_A failed with error: %ld\n", status);
+        return 1;
+    }
+
+    printf("DNS query succeeded.\n");
+
+    return 0;
+}
+```
+Running it produced exactly the Sysmon event sequence you'd expect:
+Event ID	Meaning
+1	`ProcessCreate` - our binary launched
+22	`DNSEvent` - the query to blog.xpnsec.com
+13	`RegistrySetValue` - Sysmon wrote the image path to AppCompatFlags (first-time execution)
+5	`ProcessTerminate` - process exited
+
+Event ID 22 is the one we care about. The question now is: what happens between the ETW event arriving at **SysmonDnsEtwSession** and Sysmon writing that structured log entry? That's where WinDbg comes in.
+
+
+### Silencing Sysmon's DNS Logging — Patching the ETW Emit Path
+Since DnsQuery_A is exported from dnsapi.lib, I opened the DLL in IDA alongside WinDbg to hunt for the provider GUID we identified earlier — {1C95126E-7EEA-49A9-A3FE-A378B03DDB4D}.
+
+The GUID was there, referenced by a symbol named DNS_CLIENT — consistent with what XPN had documented. Following the cross-references led to McGenEventRegister, which in this version of the DLL had been renamed to McGenEventRegister_EtwEventRegister. Same pattern, new name.
+
+##### Tracing the Emit Path
+From there I traced where the actual event write happens. The callback chain bottoms out at EtwEventWriteTransfer, with the full callstack looking like this:
+```
+[0x0]  ntdll!EtwEventWriteTransfer
+[0x1]  DNSAPI!McGenEventWrite_EtwEventWriteTransfer+0x3f
+[0x2]  DNSAPI!DnsEtwTraceQueryExStart+0x3d8
+[0x3]  DNSAPI!Query_PrivateExW+0x227
+[0x4]  DNSAPI!Query_Shim+0x159
+[0x5]  DNSAPI!DnsQuery_A+0x51
+[0x6]  ConsoleApplication12!main+0x28
+```
+Compared to XPN's original callstack:
+```
+DNSAPI!McGenEventWrite+0x3f
+DNSAPI!McTemplateU0zqxqz+0xdb
+DNSAPI!Query_PrivateExW+0x27ae1
+DNSAPI!Query_Shim+0xbd
+DNSAPI!DnsQuery_A+0x29
+```
+The structure is the same but the intermediate functions have changed — McTemplateU0zqxqz is gone, replaced by DnsEtwTraceQueryExStart. Microsoft refactored the internals but the ETW emit mechanism is identical.
 
 
 
-when we test 
+
+With the callstack mapped out, the target was clear: DnsEtwTraceQueryExStart — the function that leads to EtwEventWriteTransfer. I patched it with a C3 (ret) and sent a DNS query. Sysmon still logged it.
+
+So there's at least one more emit site. Going back to IDA and checking all xrefs of McGenEventWrite_EtwEventWriteTransfer, a second call site showed up: DnsEtwTraceQueryExComplete. The naming makes sense in hindsight — one function fires at the start of the query, the other at completion. Both independently emit ETW events. Patched that one with C3 too. Still logged.
+
+
+
+
+
+
+- **First Patch Attempt — Naive ret**
+The obvious first move was to patch DnsEtwTraceQueryExStart with a C3 (ret) and see if that killed the log. It didn't. Digging further revealed a second emit site: DnsEtwTraceQueryExComplete, which is the other place McGenEventWrite_EtwEventWriteTransfer gets called — covering the query completion path.
+
+Patched both with C3. Still logged.
+
+- **Second Attempt — Patching the Conditional Jumps**
+Returning to WinDbg, this time I watched the actual execution flow carefully with Sysmon absent — to identify which branch is taken when ETW logging is effectively inactive. That gave me the specific conditional jumps (JE) inside both functions that gate the EtwEventWriteTransfer call.
+
+The fix was straightforward: change those JE instructions to unconditional JMP, forcing execution to always take the non-logging branch regardless of whether a session is listening.
+
+After both patches — no Event ID 22 generated.
+
+
+
+
+The ETW emit decision lives entirely inside dnsapi.dll, not in Sysmon. Sysmon just consumes what the provider emits. Patch the provider's emit path at the right conditional branch, and Sysmon never sees the event — there's nothing for it to log.
+
+
+Finally, there is no log generated. :D
 
 
 
