@@ -99,7 +99,7 @@ This key is what that use to recover for subsequent data decryption.
 As you can see it expose only the `Interface {1BF5208B-295F-4992-B5F4-3A9BB6494838}` : **IElevator2Chrome**
 
 
-<img width="518" height="234" alt="Screenshot 2026-02-10 005156" src="https://github.com/user-attachments/assets/700c3975-f1da-479d-8932-e21391a402a0" />
+<img width="524" height="213" alt="image" src="https://github.com/user-attachments/assets/e0e7ca0e-a7ca-40e9-996b-fd67a8e05ead" />
 
 <img width="957" height="611" alt="image" src="/images/26.png" />
 
