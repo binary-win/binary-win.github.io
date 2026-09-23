@@ -180,10 +180,21 @@ Event ID	Meaning
 Event ID 22 is the one we care about. The question now is: what happens between the ETW event arriving at **SysmonDnsEtwSession** and Sysmon writing that structured log entry? That's where WinDbg comes in.
 
 
+![First Image](/images/dns-no-patch.png)
+
+
+
 ### Silencing Sysmon's DNS Logging — Patching the ETW Emit Path
 Since DnsQuery_A is exported from dnsapi.lib, I opened the DLL in IDA alongside WinDbg to hunt for the provider GUID we identified earlier — {1C95126E-7EEA-49A9-A3FE-A378B03DDB4D}.
+![First Image](/images/guid-dnsapi.png)
+
+
 
 The GUID was there, referenced by a symbol named DNS_CLIENT — consistent with what XPN had documented. Following the cross-references led to McGenEventRegister, which in this version of the DLL had been renamed to McGenEventRegister_EtwEventRegister. Same pattern, new name.
+
+![First Image](/images/McGenEventRegister_EtwEventRegister.png)
+
+
 
 ##### Tracing the Emit Path
 From there I traced where the actual event write happens. The callback chain bottoms out at EtwEventWriteTransfer, with the full callstack looking like this:
@@ -207,14 +218,15 @@ DNSAPI!DnsQuery_A+0x29
 The structure is the same but the intermediate functions have changed — McTemplateU0zqxqz is gone, replaced by DnsEtwTraceQueryExStart. Microsoft refactored the internals but the ETW emit mechanism is identical.
 
 
+![First Image](/images/etwwritetransfer.png)
+
 
 
 With the callstack mapped out, the target was clear: DnsEtwTraceQueryExStart — the function that leads to EtwEventWriteTransfer. I patched it with a C3 (ret) and sent a DNS query. Sysmon still logged it.
 
 So there's at least one more emit site. Going back to IDA and checking all xrefs of McGenEventWrite_EtwEventWriteTransfer, a second call site showed up: DnsEtwTraceQueryExComplete. The naming makes sense in hindsight — one function fires at the start of the query, the other at completion. Both independently emit ETW events. Patched that one with C3 too. Still logged.
 
-
-
+![First Image](/images/mc.png)
 
 
 
