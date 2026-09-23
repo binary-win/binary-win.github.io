@@ -186,6 +186,7 @@ Event ID 22 is the one we care about. The question now is: what happens between 
 
 ### Silencing Sysmon's DNS Logging — Patching the ETW Emit Path
 Since DnsQuery_A is exported from dnsapi.lib, I opened the DLL in IDA alongside WinDbg to hunt for the provider GUID we identified earlier — {1C95126E-7EEA-49A9-A3FE-A378B03DDB4D}.
+
 ![First Image](/images/guid-dnsapi.png)
 
 
